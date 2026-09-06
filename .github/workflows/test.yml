@@ -3,6 +3,12 @@ name: Automation Tests
 on:
   push:
     branches: [main]
+  schedule:
+    # 매일 한국시간(KST, UTC+9) 오전 8시 = UTC 전날 23시. GitHub Actions의 schedule은
+    # 항상 UTC 기준이며, 항상 default 브랜치(main) 최신 커밋 기준으로 실행된다.
+    # self-hosted 러너(korea-macos-runner)가 이 시각에 온라인 상태여야 실행된다
+    # (AUTOMATION_GUIDE 16.3절 참고).
+    - cron: "0 23 * * *"
 
 jobs:
   test:
