@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 
 import pytest
@@ -49,6 +50,13 @@ def driver():
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--disable-blink-features=AutomationControlled")
+
+    if os.environ.get("CI"):
+        # GitHub Actions 러너는 디스플레이가 없어 일반 Chrome이 그대로 실행되지 않는다
+        # (로컬 개발 환경에는 CI 환경변수가 없으므로 이 분기는 CI에서만 적용된다).
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
 
     driver = webdriver.Chrome(options=options)
     _hide_webdriver_flag(driver)
@@ -160,9 +168,24 @@ def _login_with_google(driver):
     _complete_google_login(driver)
 
 
+def _login_with_session_cookies(driver):
+    # CI에서는 구글 로그인 UI를 직접 자동화하지 않고, scripts/export_session_cookies.py로
+    # 로컬에서 미리 캡처해 GitHub Secret으로 저장해 둔 세션 쿠키를 주입한다
+    # (AUTOMATION_GUIDE 16.1절). 쿠키를 추가하려면 먼저 해당 도메인 페이지에 있어야
+    # 하므로 BASE_URL로 이동한 뒤 주입하고, 다시 이동해 세션을 반영한다.
+    cookies = json.loads(os.environ["SESSION_COOKIES_JSON"])
+
+    driver.get(BASE_URL)
+    for cookie in cookies:
+        driver.add_cookie(cookie)
+    driver.get(BASE_URL)
+
+
 @pytest.fixture(scope="function")
 def logged_in_driver(driver):
-    if LOGIN_METHOD == "google":
+    if os.environ.get("SESSION_COOKIES_JSON"):
+        _login_with_session_cookies(driver)
+    elif LOGIN_METHOD == "google":
         _login_with_google(driver)
     else:
         _login_with_email(driver)
