@@ -41,9 +41,9 @@ jobs:
           # 16.1절 참고).
           GOOGLE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_ACCOUNT_EMAIL }}
           GOOGLE_ACCOUNT_PASSWORD: ${{ secrets.GOOGLE_ACCOUNT_PASSWORD }}
-        run: |
-          mkdir -p reports
-          python3 -m pytest --junitxml=reports/results.xml --html=reports/report.html
+        # 리포트 경로(--html/--junitxml)는 pytest.ini의 addopts가 전담한다(로컬 실행과
+        # 동일한 기본값 유지, 중복 지정 방지).
+        run: python3 -m pytest
 
       - name: Upload test reports
         if: always()

@@ -70,7 +70,7 @@ Candidate 문서를 Source of Truth로 참조하며, 이 문서에 전체 TC를 
 | 자동화 도구 | **Selenium WebDriver** | |
 | 테스트 러너 | **pytest** | |
 | 설계 패턴 | **Page Object Model (POM)** | |
-| 리포팅 | **pytest-html + JUnit XML(`--junitxml`) 병행** | HTML은 사람이 보는 Artifact, JUnit XML은 Slack 실패 메시지 조립용 |
+| 리포팅 | **pytest-html + JUnit XML(`--junitxml`) 병행** | HTML은 사람이 보는 Artifact, JUnit XML은 Slack 실패 메시지 조립용. `pytest.ini`의 `addopts`로 기본 경로(`reports/report.html`, `reports/results.xml`)가 고정되어 있어 로컬/CI 어디서 실행하든 옵션 없이 자동 생성되며, Phase별 별도 파일명이 필요하면 CLI에서 `--html`/`--junitxml`을 다시 지정해 덮어쓸 수 있다 |
 | 실행 브라우저 | **Chrome (ChromeDriver)** | 일반 데스크톱 창 크기로 실행, 별도 모바일 에뮬레이션 미사용(사용자 결정 — 라프텔 스토어는 모바일 웹 기준 반응형 사이트이나 PC Chrome에서도 동일하게 동작함. 모바일 웹 자체 검증은 이번 범위 밖, 추후 별도 진행) |
 | 대상 환경 | Production 단일 환경 (`https://store.laftel.net/`) | 별도 dev/staging 없음(Project PRD 3절), 장비 부족으로 PC Chrome에서만 검증(Project PRD 4절) |
 | CI/CD | **GitHub Actions** | Push 시 자동 테스트 실행(16절) |
@@ -1209,3 +1209,7 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
 | 2026-09-06 | test.yml에 schedule 트리거(cron "0 23 * * *", 매일 한국시간 오전\
  8시) 추가 — push가 없는 날에도 매일 자동으로 전체 테스트 실행. 16.3절에\
  관련 내용 반영 (사용자 요청) | 승인완료 |
+| 2026-09-06 | 로컬 실행 시 리포트가 자동 생성되지 않던 문제 발견 — pytest.ini에\
+ addopts(--html/--junitxml 기본 경로) 추가로 로컬/CI 어디서 실행하든 옵션 없이\
+ 리포트가 자동 생성되도록 개선, test.yml의 중복된 명시적 플래그 제거, 1절 및\
+ README.md에 반영 (사용자 요청) | 승인완료 |

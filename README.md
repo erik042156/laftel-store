@@ -87,9 +87,16 @@ python3 -m pytest -k "wish" -v                                                  
 
 #### 실행 결과 확인
 
+위 명령 중 어떤 방식으로 실행하든(`pytest.ini`의 `addopts`가 항상 적용되므로 별도
+옵션을 주지 않아도) 실행이 끝나면 아래 파일이 자동으로 생성/갱신됩니다.
+
 - HTML 리포트: `automation/reports/report.html`
+- JUnit XML 리포트: `automation/reports/results.xml` (CI의 Slack 알림이 파싱하는 것과 동일한 형식)
 - 실패 시 자동 저장되는 스크린샷: `automation/screenshots/`
-- 둘 다 `.gitignore`에 포함되어 커밋되지 않습니다.
+
+셋 다 `.gitignore`에 포함되어 커밋되지 않습니다. Phase별로 리포트 파일명을 따로 남기고
+싶다면 `--html=reports/report_phase5.html`처럼 직접 지정하면 기본값 대신 그 이름으로
+저장됩니다.
 
 #### 문제가 생겼을 때
 
