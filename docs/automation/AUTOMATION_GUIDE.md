@@ -880,8 +880,6 @@ def login_page(driver):
   절차를 따릅니다. 캡처한 세션 쿠키는 민감정보이므로 로컬 디스크에 파일로 남기지 않고
   즉시 GitHub Secret 등록에만 사용합니다(12절 환경변수 관리 원칙과 동일하게, CI는
   GitHub Secrets로만 관리하고 로그에 노출하지 않습니다).
-- 구체적인 세션 캡처 스크립트, Secret 이름, 갱신 절차(런북)는 Phase Final 구현 완료
-  시점에 이 절에 이어서 보강합니다.
 - **CI 러너는 GitHub 호스팅이 아닌 한국 소재 self-hosted 러너(로컬 macOS)를
   사용합니다.** PhaseFinal-H 실측 결과 `store.laftel.net`이 한국 외 지역 IP를
   차단해("Sorry, this service is only available in South Korea.") GitHub 호스팅
@@ -895,6 +893,42 @@ def login_page(driver):
   탐지 위험이 로컬 개발 시와 동일한 수준으로 낮아져, `GOOGLE_ACCOUNT_EMAIL`/
   `GOOGLE_ACCOUNT_PASSWORD`도 GitHub Secret으로 추가 등록해 이 두 TC만 예외적으로
   실제 로그인 플로우를 그대로 사용합니다(사용자 승인).
+
+### 16.2 세션 쿠키 수동 갱신 런북
+
+`SESSION_COOKIES_JSON`은 만료 시(로그인 필요 테스트들이 한꺼번에 실패하기 시작하는
+것으로 관찰됨) 사용자가 아래 절차로 직접 갱신합니다. 자동 갱신 워크플로우는 두지
+않습니다(16.1절).
+
+1. 만료 징후 확인: Slack 실패 알림에서 `test_wishlist.py`/`test_cart.py`/
+   `test_order.py`/`test_product_detail.py`의 `logged_in_driver` 기반 테스트가
+   대거 실패하고, 실패 사유가 로그인 프롬프트 관련 요소를 찾지 못하는 타임아웃
+   패턴이면 세션 만료를 의심합니다.
+2. `automation/` 디렉터리에서 새 세션을 캡처해 곧바로 GitHub Secret에 덮어쓰기
+   등록합니다(파일로 저장하지 않고 파이프로 직접 전달):
+   ```bash
+   python3 scripts/export_session_cookies.py | gh secret set SESSION_COOKIES_JSON --repo erik042156/laftel-store
+   ```
+3. `gh secret list --repo erik042156/laftel-store`로 `SESSION_COOKIES_JSON`의
+   갱신 시각이 방금 시점으로 바뀌었는지 확인합니다.
+4. 임의의 로그인 필요 테스트를 담은 커밋을 Push(또는 재실행)해 CI에서 실제로
+   로그인 상태가 정상 반영되는지 확인합니다.
+5. 구글 계정 비밀번호 자체를 변경한 경우에는 `GOOGLE_ACCOUNT_EMAIL`/
+   `GOOGLE_ACCOUNT_PASSWORD` Secret도 동일한 방식(`gh secret set`)으로 갱신합니다
+   (이 두 값은 TC-WISHLIST-031/032 실제 로그인 UI 테스트 전용, 16.1절 참고).
+
+세션 만료 주기는 아직 확정되지 않았으며(실사용 중 관찰 예정), 만료 시 위 절차로
+대응합니다.
+
+### 16.3 self-hosted 러너 운영 참고
+
+- 러너 설치 위치: `~/actions-runner-laftel-store`(Git 저장소 바깥, 별도 디렉터리).
+- 상태 확인: `cd ~/actions-runner-laftel-store && ./svc.sh status` 또는
+  `gh api repos/erik042156/laftel-store/actions/runners --jq '.runners[]'`.
+- 러너를 재시작해야 하면 `./svc.sh stop && ./svc.sh start`를 사용합니다(launchd
+  백그라운드 서비스로 등록되어 있어 로그아웃/재부팅 후에도 자동 재시작됩니다).
+- 이 머신이 꺼져 있거나 서비스가 중지된 동안 Push된 커밋은, 러너가 다시 온라인이
+  될 때까지 GitHub Actions 큐에서 대기합니다(즉시 실행되지 않음).
 
 ---
 
@@ -1156,3 +1190,6 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
  자체 차단을 받음을 확인, requires_real_browser 마커로 이 2개만 CI에서도 headless\
  제외하도록 conftest.py/pytest.ini/test_wishlist.py 수정. GOOGLE_ACCOUNT_EMAIL/\
  PASSWORD를 GitHub Secret으로 추가 (사용자 승인) | 승인완료 |
+| 2026-09-06 | 16.2절 신설 — 세션 쿠키(SESSION_COOKIES_JSON) 수동 갱신 런북 작성.\
+ 16.3절 신설 — self-hosted 러너(korea-macos-runner) 설치 위치·상태확인·재시작\
+ 방법 등 운영 참고 기록. Phase Final 구현 완료에 따른 문서 마무리 (사용자 승인) | 승인완료 |
