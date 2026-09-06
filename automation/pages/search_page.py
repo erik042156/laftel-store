@@ -50,9 +50,6 @@ class SearchPage(BasePage):
     def click_cancel(self):
         self.click(self.CANCEL_BUTTON)
 
-    def get_current_url(self):
-        return self.driver.current_url
-
     def type_keyword(self, text):
         self.type_text(self.SEARCH_INPUT, text)
 

@@ -97,6 +97,10 @@ def _agree_to_store_terms_if_present(driver):
         pass
 
 
+def _parse_won(text):
+    return int(text.replace(",", "").replace("원", ""))
+
+
 def _login_with_email(driver):
     email = os.environ["TEST_ACCOUNT_EMAIL"]
     password = os.environ["TEST_ACCOUNT_PASSWORD"]

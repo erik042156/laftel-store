@@ -1,4 +1,5 @@
 from config.settings import BASE_URL, PRODUCT_ID_ON_SALE
+from conftest import _parse_won
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
 from pages.product_detail_page import ProductDetailPage
@@ -137,10 +138,6 @@ def test_shipping_request_direct_input_blocks_over_50_chars(logged_in_driver):
     assert len(actual_value) == 50, f"Expected text to remain at 50 chars, but got {len(actual_value)}"
 
     assert checkout_page.is_shipping_request_char_count_warning(), "Expected char counter to show warning color"
-
-
-def _parse_won(text):
-    return int(text.replace(",", "").replace("원", ""))
 
 
 def test_payment_summary_shows_all_line_items(logged_in_driver):

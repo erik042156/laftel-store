@@ -29,6 +29,3 @@ class IpPage(BasePage):
             and len(self.driver.find_elements(*self.SORT_DROPDOWN_HEADING)) > 0
             and len(self.driver.find_elements(*self.PRODUCT_GRID_ITEM)) > 0
         )
-
-    def get_current_url(self):
-        return self.driver.current_url

@@ -1,4 +1,5 @@
 from config.settings import BASE_URL, PRODUCT_ID_HIGH_PRICE, PRODUCT_ID_ON_SALE, PRODUCT_ID_WITH_OPTIONS
+from conftest import _parse_won
 from pages.cart_page import CartPage
 from pages.product_detail_page import ProductDetailPage
 
@@ -151,10 +152,6 @@ def test_bulk_delete_removes_selected_items(logged_in_driver):
     cart_page.wait_for_item_count(0)
 
     assert cart_page.is_empty(), "Expected all selected items to be removed after bulk delete"
-
-
-def _parse_won(text):
-    return int(text.replace(",", "").replace("원", ""))
 
 
 def test_payment_summary_shows_all_line_items(logged_in_driver):

@@ -1,12 +1,17 @@
 import logging
 
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import DEFAULT_TIMEOUT
 
 logger = logging.getLogger(__name__)
+
+# 상품 카드에 표시되는 상태 뱃지 라벨 집합(여러 Page Object의 뱃지 판정 로직이
+# 공유한다, get_status_badge_text 참고).
+STATUS_BADGE_LABELS = {"품절", "판매종료", "예약구매", "NEW"}
 
 
 class BasePage:
@@ -50,7 +55,19 @@ class BasePage:
         element.send_keys(text)
 
     def get_text(self, locator):
-        return self._wait(locator).text
+        # presence만으로는 headless 환경에서 요소가 논리적으로는 렌더링되었지만
+        # 아직 화면에 표시되지 않은 상태의 빈 텍스트를 읽어버릴 수 있어(7.15/7.21절과
+        # 동일 유형 재발 방지), 가시성까지 보장한 뒤 읽는다.
+        return self._wait(locator, EC.visibility_of_element_located).text
+
+    def get_current_url(self):
+        return self.driver.current_url
+
+    def get_status_badge_text(self, card):
+        for span in card.find_elements(By.XPATH, ".//span[not(*)]"):
+            if span.text in STATUS_BADGE_LABELS:
+                return span.text
+        return None
 
     def wait_for_url_contains(self, text):
         try:

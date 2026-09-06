@@ -21,9 +21,6 @@ class SearchResultPage(BasePage):
     SORT_DIALOG_OPEN = '//*[@data-scope="dialog" and @data-part="content" and @data-state="open"]'
     EMPTY_STATE_MESSAGE = (By.XPATH, '//p[normalize-space(.)="앗! 원하시는 검색 결과가 없어요."]')
 
-    def get_current_url(self):
-        return self.driver.current_url
-
     def is_screen_displayed(self):
         # 진입 직후에는 상품 그리드/총개수/정렬이 비동기로 채워지므로, 그리드 항목이
         # 나타날 때까지 명시적으로 대기한 뒤 나머지 요소 존재 여부를 판정한다.

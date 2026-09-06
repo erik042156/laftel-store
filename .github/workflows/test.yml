@@ -51,6 +51,10 @@ jobs:
 
       - name: Notify Slack
         if: always()
+        # Slack 알림 자체의 실패(웹훅 일시 오류 등)가 실제 pytest 결과와 무관하게
+        # job을 실패로 만들지 않도록 한다. 실제 테스트 성공/실패 판정은 별도로
+        # steps.pytest.outcome을 보는 마지막 스텝이 전담한다.
+        continue-on-error: true
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: bash automation/scripts/notify-ci-slack.sh automation/reports/results.xml

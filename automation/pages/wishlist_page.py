@@ -4,8 +4,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from config.settings import BASE_URL, DEFAULT_TIMEOUT
 from pages.base_page import BasePage
 
-_STATUS_BADGE_LABELS = {"품절", "판매종료", "예약구매", "NEW"}
-
 
 class WishlistPage(BasePage):
     # 비활성 탭의 패널도 DOM에 함께 남아있어(7.13/7.14절) href만으로 매칭하면 숨겨진
@@ -146,16 +144,10 @@ class WishlistPage(BasePage):
 
     def get_product_status_badge_text(self, product_id):
         card = self._wait((By.XPATH, f'//a[@href="/products/{product_id}"]'))
-        for span in card.find_elements(By.XPATH, ".//span[not(*)]"):
-            if span.text in _STATUS_BADGE_LABELS:
-                return span.text
-        return None
+        return self.get_status_badge_text(card)
 
     def click_product(self, product_id):
         self.click((By.XPATH, f'//a[@href="/products/{product_id}"]'))
-
-    def get_current_url(self):
-        return self.driver.current_url
 
     def get_login_prompt_text(self):
         self.wait_for_text(self.LOGIN_PROMPT_HEADING, "로그인")

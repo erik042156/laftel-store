@@ -55,9 +55,6 @@ class CheckoutPage(BasePage):
         '//div[@role="dialog" and @data-state="open"]//button[normalize-space(.)="확인"]',
     )
 
-    def get_current_url(self):
-        return self.driver.current_url
-
     def get_recipient_name_placeholder(self):
         return self._wait(self.RECIPIENT_NAME_INPUT).get_attribute("placeholder")
 

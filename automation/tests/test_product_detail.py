@@ -436,13 +436,17 @@ def test_wish_icon_click_when_logged_in_adds_wish(logged_in_driver):
         page.click_wish_icon()
         page.wait_for_attribute_value(page.BOTTOM_WISH_ICON, "aria-pressed", "false")
 
-    page.click_wish_icon()
-    page.wait_for_attribute_value(page.BOTTOM_WISH_ICON, "aria-pressed", "true")
+    try:
+        page.click_wish_icon()
+        page.wait_for_attribute_value(page.BOTTOM_WISH_ICON, "aria-pressed", "true")
 
-    assert page.is_wish_icon_filled(), "Expected wish icon to be filled after clicking while logged in"
-
-    page.click_wish_icon()  # 테스트 종료 후 찜 상태 원복
-    page.wait_for_attribute_value(page.BOTTOM_WISH_ICON, "aria-pressed", "false")
+        assert page.is_wish_icon_filled(), "Expected wish icon to be filled after clicking while logged in"
+    finally:
+        # 중간 assert 실패로 여기 도달해도 실제 상태를 확인한 뒤에만 원복한다(무조건
+        # 토글하면 실패 지점에 따라 오히려 반대로 어긋날 수 있다).
+        if page.is_wish_icon_filled():
+            page.click_wish_icon()
+            page.wait_for_attribute_value(page.BOTTOM_WISH_ICON, "aria-pressed", "false")
 
 
 def test_wish_icon_re_click_removes_wish(logged_in_driver):
@@ -470,15 +474,17 @@ def test_related_card_wish_icon_toggles_in_place(logged_in_driver):
         page.click_related_card_wish_icon(index=1)
         page.wait_for_attribute_value(page.related_card_wish_icon_locator(index=1), "aria-pressed", "false")
 
-    page.click_related_card_wish_icon(index=1)
-    page.wait_for_attribute_value(page.related_card_wish_icon_locator(index=1), "aria-pressed", "true")
+    try:
+        page.click_related_card_wish_icon(index=1)
+        page.wait_for_attribute_value(page.related_card_wish_icon_locator(index=1), "aria-pressed", "true")
 
-    assert page.is_related_card_wish_filled(index=1), "Expected related card wish icon to be filled"
-    actual_url = page.get_current_url()
-    assert actual_url == original_url, f"Expected no navigation, but URL changed to {actual_url}"
-
-    page.click_related_card_wish_icon(index=1)  # 테스트 종료 후 찜 상태 원복
-    page.wait_for_attribute_value(page.related_card_wish_icon_locator(index=1), "aria-pressed", "false")
+        assert page.is_related_card_wish_filled(index=1), "Expected related card wish icon to be filled"
+        actual_url = page.get_current_url()
+        assert actual_url == original_url, f"Expected no navigation, but URL changed to {actual_url}"
+    finally:
+        if page.is_related_card_wish_filled(index=1):
+            page.click_related_card_wish_icon(index=1)
+            page.wait_for_attribute_value(page.related_card_wish_icon_locator(index=1), "aria-pressed", "false")
 
 
 def test_my_store_sections_click_enters_product_detail(logged_in_driver):
@@ -492,30 +498,32 @@ def test_my_store_sections_click_enters_product_detail(logged_in_driver):
         product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "true")
         wished_here = True
 
-    my_store_page = MyStorePage(logged_in_driver)
+    try:
+        my_store_page = MyStorePage(logged_in_driver)
 
-    my_store_page.open()
-    my_store_page.click_wish_section_product()
-    my_store_page.wait_for_url_contains(f"{BASE_URL}products/")
-    actual_url = logged_in_driver.current_url
-    assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
+        my_store_page.open()
+        my_store_page.click_wish_section_product()
+        my_store_page.wait_for_url_contains(f"{BASE_URL}products/")
+        actual_url = logged_in_driver.current_url
+        assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
 
-    my_store_page.open()
-    my_store_page.click_recent_section_product()
-    my_store_page.wait_for_url_contains(f"{BASE_URL}products/")
-    actual_url = logged_in_driver.current_url
-    assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
+        my_store_page.open()
+        my_store_page.click_recent_section_product()
+        my_store_page.wait_for_url_contains(f"{BASE_URL}products/")
+        actual_url = logged_in_driver.current_url
+        assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
 
-    my_store_page.open()
-    my_store_page.click_recommend_section_product()
-    my_store_page.wait_for_url_contains(f"{BASE_URL}products/")
-    actual_url = logged_in_driver.current_url
-    assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
-
-    if wished_here:
-        product_detail_page.open(PRODUCT_ID_ON_SALE)
-        product_detail_page.click_wish_icon()
-        product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "false")
+        my_store_page.open()
+        my_store_page.click_recommend_section_product()
+        my_store_page.wait_for_url_contains(f"{BASE_URL}products/")
+        actual_url = logged_in_driver.current_url
+        assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
+    finally:
+        if wished_here:
+            product_detail_page.open(PRODUCT_ID_ON_SALE)
+            if product_detail_page.is_wish_icon_filled():
+                product_detail_page.click_wish_icon()
+                product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "false")
 
 
 def test_wishlist_page_item_click_enters_product_detail(logged_in_driver):
@@ -529,36 +537,44 @@ def test_wishlist_page_item_click_enters_product_detail(logged_in_driver):
         product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "true")
         wished_here = True
 
-    wishlist_page = WishlistPage(logged_in_driver)
-    wishlist_page.open()
-    wishlist_page.click_first_item()
-    wishlist_page.wait_for_url_contains(f"{BASE_URL}products/")
+    try:
+        wishlist_page = WishlistPage(logged_in_driver)
+        wishlist_page.open()
+        wishlist_page.click_first_item()
+        wishlist_page.wait_for_url_contains(f"{BASE_URL}products/")
 
-    actual_url = logged_in_driver.current_url
-    assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
-
-    if wished_here:
-        product_detail_page.open(PRODUCT_ID_ON_SALE)
-        if product_detail_page.is_wish_icon_filled():
-            product_detail_page.click_wish_icon()
-            product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "false")
+        actual_url = logged_in_driver.current_url
+        assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
+    finally:
+        if wished_here:
+            product_detail_page.open(PRODUCT_ID_ON_SALE)
+            if product_detail_page.is_wish_icon_filled():
+                product_detail_page.click_wish_icon()
+                product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "false")
 
 
 def test_cart_page_item_click_enters_product_detail(logged_in_driver):
     """TC-PRODUCT-DETAIL-005"""
+    cart_page = CartPage(logged_in_driver)
+    # 이 테스트가 담근 상품이 카트에 남아 다른 카트 테스트의 사전조건을 깨지 않도록,
+    # 다른 카트 관련 테스트와 동일하게 스스로 정리한다(테스트 격리 원칙).
+    cart_page.clear_cart()
+
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
     product_detail_page.click_add_to_cart_button()
+    product_detail_page.get_add_to_cart_toast_text()
 
-    cart_page = CartPage(logged_in_driver)
     cart_page.open()
     cart_page.click_first_item()
     cart_page.wait_for_url_contains(f"{BASE_URL}products/")
 
     actual_url = logged_in_driver.current_url
     assert actual_url.startswith(f"{BASE_URL}products/"), f"Expected a product detail URL, but got {actual_url}"
+
+    cart_page.clear_cart()
 
 
 def test_visiting_product_detail_records_recent_viewed(logged_in_driver):

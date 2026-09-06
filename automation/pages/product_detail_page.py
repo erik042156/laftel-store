@@ -54,9 +54,6 @@ class ProductDetailPage(BasePage):
     def click_cart_icon(self):
         self.click(self.CART_ICON)
 
-    def get_current_url(self):
-        return self.driver.current_url
-
     def get_login_prompt_text(self):
         # 팝업 요소가 DOM에 나타난 직후에는 텍스트가 아직 채워지지 않은 경우가 있어,
         # 내용이 실제로 채워질 때까지 기다린 뒤 읽는다.
