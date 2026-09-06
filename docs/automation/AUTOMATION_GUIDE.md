@@ -671,6 +671,33 @@ REQ-SEARCH-016의 "검색페이지 상태 유지"는 이 두 섹션이 그대로
 분리했습니다. 입력값 유무에 따라 달라지는 화면 요소를 "화면 유지" 조건으로 쓸 때는
 어떤 하위 요소가 입력값에 반응해 사라지는지 먼저 실측으로 구분합니다.
 
+### 7.21 찜 삭제 확인 다이얼로그 텍스트의 headless 판정 실패 (Phase Final)
+
+Phase Final(CI/CD) 첫 self-hosted 러너 실행 중 `test_bulk_delete_confirm_dialog_cancel_keeps_selection`
+(TC-WISHLIST-023)이 headless 모드에서만 실패함을 발견했습니다. 로컬(비headless)에서는
+항상 통과했으나, `CI=true`(headless) 조건으로 로컬에서 직접 재현한 결과 동일하게
+실패해(7.15절과 같은 유형) headless 자체의 문제임을 확인했습니다.
+`WishlistPage.get_delete_confirm_dialog_text()`가 `WebElement.text`(렌더링 가시성에
+의존)를 사용해 빈 문자열을 반환하고 있었고, `get_attribute("textContent")`로
+교체해 headless/비headless 모두에서 안정적으로 통과함을 확인했습니다. 다이얼로그·팝업
+등 동적으로 나타나는 요소의 텍스트를 읽을 때는 headless 실행 가능성을 고려해 처음부터
+`textContent` 사용을 우선 검토합니다.
+
+### 7.22 self-hosted 러너(launchd 백그라운드 서비스)에서만 재현되는 타이밍 이슈 (Phase Final, 원인 조사 중)
+
+동일한 CI 실행에서 `test_search.py`의 자동완성/Enter 키 기반 검색 실행 테스트 3건
+(`test_autocomplete_shows_work_badge_and_related_keyword_sections`,
+`test_search_no_results_keyword_shows_empty_state`,
+`test_recent_search_item_click_re_executes_search`)이 실패했습니다. 그러나 동일한
+머신에서 `CI=true`로 **터미널에서 직접** 실행하면 3건 모두 정상 통과합니다 — 즉
+headless 자체의 문제가 아니라, self-hosted 러너가 macOS LaunchAgent(백그라운드
+서비스)로 Chrome을 구동하는 특정 실행 컨텍스트에서만 재현되는 타이밍 이슈로
+추정됩니다(로그인 세션 문제 아님 — 같은 실행에서 로그인 필요 테스트 다수가 정상
+통과함). 근본 원인(App Nap/프로세스 우선순위, 백그라운드 세션의 렌더링 파이프라인
+차이 등)은 아직 확정하지 못했으며, 추측으로 코드를 수정하지 않고 사용자에게 보고한 뒤
+대응 방향(러너를 foreground로 실행/타임아웃 상향/알려진 환경 이슈로 기록 후 재시도
+정책 적용 등)을 결정하기로 했다.
+
 ---
 
 ## 8. Assertion 원칙
@@ -838,6 +865,19 @@ def login_page(driver):
   GitHub Secrets로만 관리하고 로그에 노출하지 않습니다).
 - 구체적인 세션 캡처 스크립트, Secret 이름, 갱신 절차(런북)는 Phase Final 구현 완료
   시점에 이 절에 이어서 보강합니다.
+- **CI 러너는 GitHub 호스팅이 아닌 한국 소재 self-hosted 러너(로컬 macOS)를
+  사용합니다.** PhaseFinal-H 실측 결과 `store.laftel.net`이 한국 외 지역 IP를
+  차단해("Sorry, this service is only available in South Korea.") GitHub 호스팅
+  러너(해외 데이터센터)에서는 사이트 접속 자체가 불가능함을 확인했습니다. 워크플로우의
+  `runs-on`은 `[self-hosted, macOS, korea]`이며, 이 러너에는 이미 Python/Chrome이
+  설치되어 있어 `actions/setup-python`·`browser-actions/setup-chrome`은 사용하지
+  않습니다. 러너는 `~/actions-runner-laftel-store`에 설치되어 있습니다.
+- **예외 — TC-WISHLIST-031/032는 세션 주입이 아닌 실제 구글 로그인을 사용합니다.**
+  이 두 TC는 "로그인 완료 후 리디렉션"을 검증하는 로그인-UI-자체 테스트라 세션 주입으로
+  대체할 수 없습니다. CI 러너가 이제 로컬 한국 머신이라(해외 클라우드 IP가 아님) 봇
+  탐지 위험이 로컬 개발 시와 동일한 수준으로 낮아져, `GOOGLE_ACCOUNT_EMAIL`/
+  `GOOGLE_ACCOUNT_PASSWORD`도 GitHub Secret으로 추가 등록해 이 두 TC만 예외적으로
+  실제 로그인 플로우를 그대로 사용합니다(사용자 승인).
 
 ---
 
@@ -1084,3 +1124,12 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
  구글 OAuth 로그인 UI는 CI에서 직접 자동화하지 않고, 로컬에서 캡처한 세션 쿠키를\
  GitHub Secret으로 저장 후 CI에서 주입하는 방식(세션 주입)을 사용하기로 하고 문서에\
  선반영 (사용자 요청) | 승인완료 |
+| 2026-09-06 | PhaseFinal-H 실제 CI 실행 중 store.laftel.net이 한국 외 IP를 차단함을\
+ 실측 확인해 GitHub 호스팅 러너 대신 한국 소재 self-hosted 러너(로컬 macOS)로 전환\
+ (사용자 승인). 16절 runs-on 관련 워크플로우 구성 변경 | 승인완료 |
+| 2026-09-06 | 7.21절 신설 — self-hosted 러너 첫 실행에서 찜 삭제 확인 다이얼로그\
+ 텍스트가 headless 모드에서만 빈 문자열로 반환됨을 발견(7.15절과 동일 유형),\
+ get_attribute("textContent")로 수정. 7.22절 신설 — 동일 실행에서 검색 자동완성/\
+ Enter 트리거 테스트 3건이 self-hosted 러너(launchd 백그라운드 서비스) 컨텍스트에서만\
+ 재현되는 타이밍 이슈를 발견(로컬 직접 실행/headless 자체에서는 재현 안 됨), 원인\
+ 미확정 상태로 사용자에게 보고 | 승인완료 |

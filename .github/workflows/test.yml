@@ -29,6 +29,12 @@ jobs:
         continue-on-error: true
         env:
           SESSION_COOKIES_JSON: ${{ secrets.SESSION_COOKIES_JSON }}
+          # TC-WISHLIST-031/032는 세션 주입이 아닌 실제 로그인 UI 리디렉션을 검증하므로
+          # 별도로 구글 계정 자격증명이 필요하다(self-hosted 러너가 이제 로컬 한국
+          # 머신이라 봇 탐지 위험이 낮아 CI에서도 실제 로그인 사용 가능, AUTOMATION_GUIDE
+          # 16.1절 참고).
+          GOOGLE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_ACCOUNT_EMAIL }}
+          GOOGLE_ACCOUNT_PASSWORD: ${{ secrets.GOOGLE_ACCOUNT_PASSWORD }}
         run: |
           mkdir -p reports
           python3 -m pytest --junitxml=reports/results.xml --html=reports/report.html

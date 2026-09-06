@@ -183,7 +183,10 @@ class WishlistPage(BasePage):
         self.click(self.DELETE_SELECTED_LINK)
 
     def get_delete_confirm_dialog_text(self):
-        return self.get_text(self.DELETE_CONFIRM_DIALOG)
+        # headless 환경에서는 WebElement.text가 렌더링 가시성 판정에 실패해 빈 문자열을
+        # 반환하는 경우가 있어(AUTOMATION_GUIDE 7.15절과 동일 패턴), get_attribute
+        # ("textContent")로 대체한다.
+        return self._wait(self.DELETE_CONFIRM_DIALOG).get_attribute("textContent")
 
     def confirm_delete(self):
         self.click(self.DELETE_CONFIRM_BUTTON)
