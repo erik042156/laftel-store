@@ -699,6 +699,10 @@ self-hosted 러너로 전환한 첫 두 차례의 CI 실행에서 `test_search.p
 테스트만 재실행해 일시적 현상인지 확인하는 기존 정책(CLAUDE.md 13절)을 그대로
 적용한다. 추가 코드 수정은 하지 않는다.
 
+이 재현 확인 과정을 자동화한 `automation/scripts/verify_ci_failures_locally.sh`를
+추가했다 — GitHub Actions 실행 ID(생략 시 최신)로 실패한 테스트만 골라 로컬에서
+즉시 재실행한다.
+
 ### 7.23 CI에서도 실제 구글 로그인 UI가 필요한 테스트는 headless를 적용하지 않음 (Phase Final)
 
 TC-WISHLIST-031/032(`test_direct_entry_login_completes_to_original_destination`,
@@ -1193,3 +1197,8 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
 | 2026-09-06 | 16.2절 신설 — 세션 쿠키(SESSION_COOKIES_JSON) 수동 갱신 런북 작성.\
  16.3절 신설 — self-hosted 러너(korea-macos-runner) 설치 위치·상태확인·재시작\
  방법 등 운영 참고 기록. Phase Final 구현 완료에 따른 문서 마무리 (사용자 승인) | 승인완료 |
+| 2026-09-06 | 코드 리뷰 8건 반영 후 실제 CI 실행(run 34019214876)에서 4건이\
+ 7.22절과 동일한 일반 타이밍 플레이키로 실패, 로컬 단독 재실행으로 4/4 모두\
+ 통과함(코드 리뷰 수정과 무관함을 확인). 이 재현 확인 과정을 자동화한\
+ automation/scripts/verify_ci_failures_locally.sh를 추가하고 7.22절에 안내\
+ 문구 반영 (사용자 승인) | 승인완료 |
