@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import re
 
 import pytest
 from dotenv import load_dotenv
@@ -15,6 +16,34 @@ from config.settings import BASE_URL, LOGIN_EMAIL_URL, LOGIN_LANDING_URL, LOGIN_
 load_dotenv()
 
 SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), "screenshots")
+
+# 모든 테스트 함수 docstring 첫 줄은 TC-<FEATURE>-<3자리> 형식이다(FEATURE는
+# TC-PRODUCT-DETAIL처럼 하이픈을 포함할 수 있다). 이후 부가설명(" (Negative)" 등)은
+# 매칭 대상에서 제외한다.
+TC_ID_PATTERN = re.compile(r"^(TC-[A-Z]+(?:-[A-Z]+)*-\d{3})")
+TC_ID_FALLBACK = "-"
+
+
+def _extract_tc_id(item):
+    doc = getattr(item, "function", None) and item.function.__doc__
+    if not doc:
+        return TC_ID_FALLBACK
+    first_line = doc.strip().splitlines()[0].strip()
+    match = TC_ID_PATTERN.match(first_line)
+    return match.group(1) if match else TC_ID_FALLBACK
+
+
+def pytest_runtest_setup(item):
+    item.user_properties.append(("tc_id", _extract_tc_id(item)))
+
+
+def pytest_html_results_table_header(cells):
+    cells.insert(1, "<th>TC-ID</th>")
+
+
+def pytest_html_results_table_row(report, cells):
+    tc_id = dict(report.user_properties).get("tc_id", TC_ID_FALLBACK)
+    cells.insert(1, f"<td>{tc_id}</td>")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

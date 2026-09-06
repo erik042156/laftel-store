@@ -57,6 +57,16 @@ def _extract_reason(text, fallback):
     return reason[:300]
 
 
+def _extract_tc_id(testcase):
+    properties = testcase.find("properties")
+    if properties is None:
+        return "-"
+    for prop in properties.findall("property"):
+        if prop.get("name") == "tc_id":
+            return prop.get("value") or "-"
+    return "-"
+
+
 if failed_count == 0:
     color = "#2eb67d"
     text = f":white_check_mark: 자동화 테스트 성공 — {passed}/{total} PASSED"
@@ -74,7 +84,8 @@ else:
         fallback_message = (node.get("message") or "").splitlines()[0][:200]
         file_ref = _extract_file_ref(body) or f"{classname.replace('.', '/')}.py"
         reason = _extract_reason(body, fallback_message)
-        lines.append(f"• `{file_ref}` — {name}\n  {reason}")
+        tc_id = _extract_tc_id(testcase)
+        lines.append(f"• `{tc_id}` `{file_ref}` — {name}\n  {reason}")
     color = "#e01e5a"
     text = "\n".join(lines)
 

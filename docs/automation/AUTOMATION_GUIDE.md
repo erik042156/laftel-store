@@ -839,6 +839,28 @@ def login_page(driver):
   업로드해 사후 확인이 가능하도록 합니다(16절 CI/CD와 연결, 실제 워크플로우 파일은 별도
   단계에서 작성 — CLAUDE.md 15절).
 
+### 14.1 리포트의 TC-ID 매핑
+
+- 모든 테스트 함수는 docstring 첫 줄에 `TC-<FEATURE>-<3자리>` 형식(예: `TC-CART-001`,
+  `TC-PRODUCT-DETAIL-013`)을 명시해야 하며, 뒤에 `" (Negative)"`처럼 부가설명을 붙일 수
+  있습니다. 이 컨벤션은 20.1절에서 이미 전제하고 있던 것을 여기서 정식 규칙으로
+  명문화한 것입니다.
+- `conftest.py`의 `pytest_runtest_setup` 훅이 이 docstring에서 정규식(`TC_ID_PATTERN`)으로
+  TC-ID를 추출해 `item.user_properties`에 `("tc_id", ...)`로 부착합니다. 이 값은 pytest
+  표준 메커니즘을 통해 `results.xml`의 각 `<testcase>`에
+  `<properties><property name="tc_id" value="TC-CART-001" /></properties>`로 자동
+  기록됩니다.
+- `report.html`(pytest-html)에는 같은 값을 `pytest_html_results_table_row`가
+  `report.user_properties`에서 재조회해 "TC-ID" 컬럼(`Result | TC-ID | Test | Duration |
+  Links` 순)으로 표시합니다. 정규식 추출 로직은 `_extract_tc_id` 한 곳에만 존재하며
+  두 리포트가 이를 재사용합니다.
+- docstring에 TC-ID가 없거나 패턴이 어긋나는 경우 `"-"`로 표시됩니다(현재는 모든 테스트가
+  패턴을 따르므로 발생하지 않지만, 향후 예외 케이스에 대한 안전장치입니다).
+- CI Slack 알림(`automation/scripts/notify-ci-slack.sh`)도 동일한 `<properties>`를 읽어
+  실패 목록 각 줄에 TC-ID를 표시합니다(예: `` `TC-CART-001` `tests/test_cart.py:42` — ...
+  ``). `<properties>`가 없는 과거 결과 XML을 넣어도 `"-"`로 표시될 뿐 스크립트가 깨지지
+  않습니다.
+
 ---
 
 ## 15. Exception Handling
@@ -1213,3 +1235,8 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
  addopts(--html/--junitxml 기본 경로) 추가로 로컬/CI 어디서 실행하든 옵션 없이\
  리포트가 자동 생성되도록 개선, test.yml의 중복된 명시적 플래그 제거, 1절 및\
  README.md에 반영 (사용자 요청) | 승인완료 |
+| 2026-09-06 | 14.1절 신설 — pytest 리포트(report.html/results.xml)와 CI Slack 알림에서\
+ 테스트 결과를 TC-ID로 매핑할 수 있도록 개선. conftest.py에 pytest_runtest_setup /\
+ pytest_html_results_table_header / pytest_html_results_table_row 훅 추가,\
+ notify-ci-slack.sh가 JUnit XML의 properties에서 tc_id를 읽어 실패 목록에 표시하도록\
+ 수정 (사용자 요청) | 승인완료 |
