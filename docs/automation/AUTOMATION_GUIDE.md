@@ -683,20 +683,37 @@ Phase Final(CI/CD) 첫 self-hosted 러너 실행 중 `test_bulk_delete_confirm_d
 등 동적으로 나타나는 요소의 텍스트를 읽을 때는 headless 실행 가능성을 고려해 처음부터
 `textContent` 사용을 우선 검토합니다.
 
-### 7.22 self-hosted 러너(launchd 백그라운드 서비스)에서만 재현되는 타이밍 이슈 (Phase Final, 원인 조사 중)
+### 7.22 CI 전체 스위트 실행 시 test_search.py 일부에서 발생하는 간헐적 타이밍 플레이키 (Phase Final, 결론)
 
-동일한 CI 실행에서 `test_search.py`의 자동완성/Enter 키 기반 검색 실행 테스트 3건
-(`test_autocomplete_shows_work_badge_and_related_keyword_sections`,
-`test_search_no_results_keyword_shows_empty_state`,
-`test_recent_search_item_click_re_executes_search`)이 실패했습니다. 그러나 동일한
-머신에서 `CI=true`로 **터미널에서 직접** 실행하면 3건 모두 정상 통과합니다 — 즉
-headless 자체의 문제가 아니라, self-hosted 러너가 macOS LaunchAgent(백그라운드
-서비스)로 Chrome을 구동하는 특정 실행 컨텍스트에서만 재현되는 타이밍 이슈로
-추정됩니다(로그인 세션 문제 아님 — 같은 실행에서 로그인 필요 테스트 다수가 정상
-통과함). 근본 원인(App Nap/프로세스 우선순위, 백그라운드 세션의 렌더링 파이프라인
-차이 등)은 아직 확정하지 못했으며, 추측으로 코드를 수정하지 않고 사용자에게 보고한 뒤
-대응 방향(러너를 foreground로 실행/타임아웃 상향/알려진 환경 이슈로 기록 후 재시도
-정책 적용 등)을 결정하기로 했다.
+self-hosted 러너로 전환한 첫 두 차례의 CI 실행에서 `test_search.py`의 서로 다른
+테스트 3건씩이 매번 다르게 실패했다(1차: 자동완성/결과없음/최근검색클릭 관련 3건,
+2차: 작품뱃지클릭/개별삭제/비로그인최근검색 관련 3건 — 완전히 다른 조합). 처음에는
+"self-hosted 러너가 macOS LaunchAgent(백그라운드 서비스)로 Chrome을 구동하는 특정
+실행 컨텍스트 때문"이라는 가설을 세워 러너를 foreground(`./run.sh` 직접 실행)로
+전환해 재검증했으나, 여전히(그러나 또 다른 조합으로) 3건이 실패해 **이 가설은
+기각되었다**. 격리 실행(해당 테스트만 단독 실행)에서는 매번 통과하는 점과 실패
+조합이 매번 달라지는 점을 종합하면, 로그인/세션/러너 실행 방식과 무관하게 **113개
+전체 테스트를 15분 이상 연속 실행할 때 발생하는 일반적인 간헐적 타이밍 플레이키**로
+결론짓는다(사용자 확인). 이 프로젝트에서 이미 문서화된 다른 플레이키 사례(로그인
+지연 7.3절, 토스트 타이밍 7.11절)와 같은 범주이며, Slack 실패 알림 수신 시 해당
+테스트만 재실행해 일시적 현상인지 확인하는 기존 정책(CLAUDE.md 13절)을 그대로
+적용한다. 추가 코드 수정은 하지 않는다.
+
+### 7.23 CI에서도 실제 구글 로그인 UI가 필요한 테스트는 headless를 적용하지 않음 (Phase Final)
+
+TC-WISHLIST-031/032(`test_direct_entry_login_completes_to_original_destination`,
+`test_site_entry_login_completes_to_previous_screen`)는 세션 주입이 아닌 실제
+`_complete_google_login()` 로그인 UI를 그대로 통과해야 하는 테스트다. CI에
+`GOOGLE_ACCOUNT_EMAIL`/`GOOGLE_ACCOUNT_PASSWORD` Secret을 추가한 뒤 실행한 결과,
+headless 모드에서 Google이 "로그인할 수 없음 — 브라우저 또는 앱이 안전하지 않을 수
+있습니다"로 로그인 자체를 차단함을 스크린샷으로 확인했다(한국 로컬 머신이어도
+headless라는 이유만으로 차단됨 — IP/위치 문제가 아님). 우회를 시도하지 않고
+사용자에게 보고한 뒤, 이 2개 테스트에만 `@pytest.mark.requires_real_browser`
+마커를 붙이고 `conftest.py`의 `driver` fixture가 이 마커가 있으면 CI에서도
+headless를 적용하지 않도록 분기했다(다른 모든 테스트의 headless 동작은 변경 없음).
+실제 머신이라 CI 실행 중 이 2개 테스트만 화면이 잠깐 뜨는 것은 문제가 되지 않는다.
+로컬에서 `CI=true`로 이 2개 테스트를 개별 실행해 headless 없이 정상 PASSED됨을
+확인했다.
 
 ---
 
@@ -1133,3 +1150,9 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
  Enter 트리거 테스트 3건이 self-hosted 러너(launchd 백그라운드 서비스) 컨텍스트에서만\
  재현되는 타이밍 이슈를 발견(로컬 직접 실행/headless 자체에서는 재현 안 됨), 원인\
  미확정 상태로 사용자에게 보고 | 승인완료 |
+| 2026-09-06 | 7.22절 갱신 — foreground 러너 재검증 결과 launchd 가설 기각, 매번\
+ 다른 조합의 test_search.py 3건이 실패해 일반적인 전체 스위트 타이밍 플레이키로\
+ 최종 결론(사용자 확인). 7.23절 신설 — TC-WISHLIST-031/032가 headless에서 Google\
+ 자체 차단을 받음을 확인, requires_real_browser 마커로 이 2개만 CI에서도 headless\
+ 제외하도록 conftest.py/pytest.ini/test_wishlist.py 수정. GOOGLE_ACCOUNT_EMAIL/\
+ PASSWORD를 GitHub Secret으로 추가 (사용자 승인) | 승인완료 |

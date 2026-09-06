@@ -1,3 +1,5 @@
+import pytest
+
 from config.settings import (
     BASE_URL,
     IP_ID_ON_SALE,
@@ -618,6 +620,7 @@ def test_login_prompt_login_button_navigates_to_login_page(driver):
     assert "auth/login" in actual_url, f"Expected a login page URL, but got {actual_url}"
 
 
+@pytest.mark.requires_real_browser
 def test_direct_entry_login_completes_to_original_destination(driver):
     """TC-WISHLIST-031"""
     wishlist_page = WishlistPage(driver)
@@ -634,6 +637,7 @@ def test_direct_entry_login_completes_to_original_destination(driver):
     assert actual_url == expected_url, f"Expected to land on {expected_url}, but got {actual_url}"
 
 
+@pytest.mark.requires_real_browser
 def test_site_entry_login_completes_to_previous_screen(driver):
     """TC-WISHLIST-032"""
     my_store_page = MyStorePage(driver)

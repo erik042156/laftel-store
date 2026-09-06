@@ -45,13 +45,19 @@ def _hide_webdriver_flag(driver):
 
 
 @pytest.fixture(scope="function")
-def driver():
+def driver(request):
     options = webdriver.ChromeOptions()
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--disable-blink-features=AutomationControlled")
 
-    if os.environ.get("CI"):
+    # 실제 구글 로그인 화면(_complete_google_login)을 그대로 통과해야 하는 테스트는
+    # headless 모드에서 구글의 자동화 브라우저 탐지("브라우저 또는 앱이 안전하지 않을
+    # 수 있습니다")에 차단된다(실측 확인, AUTOMATION_GUIDE 7.23절). 이 테스트들에는
+    # @pytest.mark.requires_real_browser 마커를 붙여 CI에서도 headless를 적용하지
+    # 않는다(실제 로컬 머신이라 화면이 떠도 문제없다).
+    requires_real_browser = request.node.get_closest_marker("requires_real_browser") is not None
+    if os.environ.get("CI") and not requires_real_browser:
         # GitHub Actions 러너는 디스플레이가 없어 일반 Chrome이 그대로 실행되지 않는다
         # (로컬 개발 환경에는 CI 환경변수가 없으므로 이 분기는 CI에서만 적용된다).
         options.add_argument("--headless=new")
