@@ -1,40 +1,39 @@
 # Laftel Store QA Automation
 
-[라프텔 스토어](https://store.laftel.net/)(애니메이션 굿즈 커머스)를 대상으로, 요구사항 분석
-→ Test Case 설계 → 자동화 대상 선정 → E2E 구현 → CI 결과 확인까지 이어지는 QA Automation
+[라프텔 스토어](https://store.laftel.net/)(애니메이션 굿즈 커머스)를 대상으로, 
+요구사항 분석→ Test Case 설계 → 자동화 대상 선정 → E2E 구현 → CI 결과 확인까지 이어지는 QA Automation
 Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 
-단순히 AI를 이용해 테스트 코드를 생성하는 것이 아니라, 반복적인 QA 작업은 AI Agent가 보조하고
+단순히 AI를 이용해 결과물을 생성하는 것이 아니라, 반복적인 QA 작업은 AI가 보조하고
 요구사항 해석, Test Coverage, 자동화 대상 선정 등 QA 판단이 필요한 단계에는 Human Approval을
-유지하는 구조를 목표로 설계했습니다. 전체 운영 원칙은 [`CLAUDE.md`](./CLAUDE.md)를 따릅니다.
+유지하는 구조를 목표로 설계했습니다. 
+
+전체 운영 원칙은 [`CLAUDE.md`](./CLAUDE.md)를 따릅니다.
 
 ---
 
-1. 🎯 Project Goal
-2. 📄 Requirements
-3. 🔄 QA Workflow
-4. 🤖 AI × Human
-5. 🎯 Automation Strategy
-6. 🧪 Test Coverage
-7. 🏗️ Architecture
-8. 🔄 CI & Reporting
-9. ⚠️ Technical Challenges
-10. 📊 Result
+1. Project Goal
+2. Requirements
+3. QA Workflow
+4. AI × Human
+5. Automation Strategy
+6. Test Coverage
+7. Architecture
+8. CI & Reporting
+9. Technical Challenges
+10. Output
+11. Project Structure
+12. Installation / How to Run
+13. Documents
 
 ---
 
-11. 📁 Project Structure
-12. 🚀 Installation / How to Run
-13. 📚 Documents
+## 1. Project Goal
 
----
+### 목표
 
-## 1. 🎯 Project Goal
-
-### 왜 만들었는가
-
-QA 업무에서 반복적으로 발생하는 요구사항 분석, Test Case 작성, 자동화 대상 선정, 테스트 코드
-구현 과정을 AI로 보조하면서도 QA Engineer의 판단이 필요한 지점은 사람이 통제할 수 있는
+QA 업무에서 반복적으로 발생하는 요구사항 분석, Test Case 작성, 자동화 대상 선정, 테스트 코드 
+구현 과정을 AI로 보조, QA Engineer의 판단이 필요한 지점은 사람이 통제할 수 있는
 Workflow를 설계하는 것을 목표로 했습니다.
 
 ### 해결하려는 QA 문제
@@ -45,34 +44,34 @@ Workflow를 설계하는 것을 목표로 했습니다.
 - AI가 생성한 결과를 검증 없이 사용하는 위험
 - 테스트 실행 및 결과 확인의 반복 작업
 
-## 2. 📄 Requirements
+## 2. Requirements
 
 본 프로젝트는 라프텔의 실제 내부 기획서(SB)에 접근할 수 없는 개인 포트폴리오 프로젝트입니다.
-따라서 공개된 서비스에서 확인 가능한 기능과 동작을 기반으로 자동화 프로젝트 수행을 위한 PRD를
-별도로 작성했습니다. 이 PRD는 실제 라프텔의 내부 요구사항을 재현하거나 추정하기 위한 문서가
-아니라, **QA Workflow를 검증하기 위한 요구사항 입력값**으로 사용했습니다.
+따라서 공개된 범위 내에서 확인 가능한 기능과 동작을 기반으로 자동화 프로젝트 수행을 위한 PRD를
+별도로 작성했습니다. 
+이 프로젝트의 PRD는 실제 라프텔의 내부 요구사항 문서가 아니라, 
+**QA Workflow를 검증하기 위한 요구사항 입력값**으로 사용했습니다.
 
 **현재 포트폴리오**
 
 ```
-공개 서비스 기능 확인 → 프로젝트용 PRD 작성 → Test Case 생성 → QA 검토/승인
-  → 자동화 대상 선정 → E2E 자동화 구현
+서비스 기능 확인 → 프로젝트용 PRD 작성 → Test Case 생성 → QA 검토/승인 → 자동화 대상 선정 → E2E 자동화 구현
 ```
 
 **실제 업무 적용 방향**
 
-실제 업무에서는 별도의 PRD를 임의로 생성하는 것이 아니라, 실제 기획서(SB)·정책서·요구사항
-문서를 Source of Truth로 사용하는 것을 전제로 합니다.
+별도의 PRD를 임의로 생성하는 것이 아닌, 
+실제 기획서(SB)·정책서·요구사항 문서를 사용하는 것을 전제로 합니다.
 
 ```
 기획서(SB)/정책서/요구사항 → Claude Code 기반 요구사항 분석 → Test Case 초안 생성
   → QA Engineer 검토 → Test Case 확정 → 자동화 대상 선정 → E2E 자동화 구현
 ```
 
-요구사항에 정의되지 않은 정책이나 Expected Result는 AI가 임의로 결정하지 않고 "확인 필요
-사항"으로 분류하여, QA Engineer의 검토 및 기획 Q&A를 거친 후 TC에 반영하는 방향을 지향합니다.
+요구사항에 정의되지 않은 정책이나 Expected Result는 AI가 임의로 결정하지 않고 
+"확인 필요사항"으로 분류하여, QA Engineer의 검토 및 기획 Q&A를 거친 후 TC에 반영하는 방향을 지향합니다.
 
-## 3. 🔄 QA Workflow
+## 3. QA Workflow
 
 ```
 Requirements (PRD)
@@ -90,7 +89,7 @@ CI (GitHub Actions 실행 → Report → Slack)
 [`CLAUDE.md`](./CLAUDE.md) 18절 User Approval 원칙). 세부 흐름은 `CLAUDE.md` 3절을
 따릅니다.
 
-## 4. 🤖 AI × Human
+## 4. AI / QA Engineer 역할
 
 AI는 QA Engineer의 판단을 대체하는 것이 아니라, 반복 작업을 줄이고 QA Engineer가 Risk와
 품질 판단에 집중할 수 있도록 보조하는 역할로 사용합니다.
@@ -98,16 +97,16 @@ AI는 QA Engineer의 판단을 대체하는 것이 아니라, 반복 작업을 �
 | QA 단계 | AI / Automation | QA Engineer |
 |---|---|---|
 | 요구사항 분석 | 문서 분석/구조화 | 요구사항 해석/누락 검토 |
-| TC 설계 | TC 초안 생성 | Coverage/Expected Result 검증 |
+| TC 설계 | TC 초안 생성 | TC 검토 및 최종 승인 |
 | 정책 모호성 | 확인 필요 항목 식별 | 기획 Q&A/정책 확정 |
 | 자동화 선정 | 후보 분석 | Risk/ROI 기반 최종 선정 |
 | 구현 | 코드 생성 보조 | 구조/Assertion/Locator 검토 |
 | 실행 | CI 자동 실행 | 실패 원인 분석 |
 | 결과 | Report/Slack 전달 | 품질 판단 |
 
-## 5. 🎯 Automation Strategy
+## 5. Automation Strategy
 
-**우선 자동화**
+**자동화 우선순위**
 
 - 핵심 사용자 Flow
 - Regression 영향도가 높은 기능
@@ -118,7 +117,7 @@ AI는 QA Engineer의 판단을 대체하는 것이 아니라, 반복 작업을 �
 
 - UI/UX의 주관적 판단이 필요한 영역
 - 외부 시스템 의존성이 지나치게 높은 TC
-- 변경 빈도가 높아 유지보수 비용이 큰 영역
+- 변경 빈도가 높아 유지보수 비용이 큰 영역 (추정)
 
 세부 평가 기준(Business Criticality/Regression Frequency/Automation Stability/Result
 Determinism/Manual Test Cost/Maintenance Cost 6개 축의 Automation Score, Hard Rule,
@@ -126,7 +125,7 @@ Candidate 판정 기준)은 [`automation-candidate` Skill](./.claude/skills/auto
 정의되어 있으며, TC별 실제 평가 결과와 최종 QA Decision은
 [`docs/tc/automation-candidates/`](./docs/tc/automation-candidates/)에서 확인할 수 있습니다.
 
-## 6. 🧪 Test Coverage
+## 6. Test Coverage
 
 | Feature | TC | Automated | 주요 검증 |
 |---|---|---|---|
@@ -144,7 +143,7 @@ Candidate 판정 기준)은 [`automation-candidate` Skill](./.claude/skills/auto
   의존성 등의 사유로 Hold/Rejected 처리된 TC이며, TC별 사유는
   `docs/tc/automation-candidates/*.md`에서 확인할 수 있습니다.
 
-## 7. 🏗️ Architecture
+## 7. Architecture
 
 - **Language**: Python 3.9
 - **E2E Framework**: Selenium 4
@@ -154,7 +153,7 @@ Candidate 판정 기준)은 [`automation-candidate` Skill](./.claude/skills/auto
   PRD 작성, TC 생성, 자동화 대상 선정, Roadmap 작성, 자동화 코드 구현을 각각 단일 책임의
   Agent/Skill로 분리해 역할이 서로 침범하지 않도록 구성([`CLAUDE.md`](./CLAUDE.md) 6절)
 
-## 8. 🔄 CI & Reporting
+## 8. CI & Reporting
 
 ```
 Code Push
@@ -173,13 +172,13 @@ Slack Notification
 ```
 
 **목적**
-> 테스트 실행부터 결과 전달까지 반복 작업을 줄이고, 실패 발생 시 QA Engineer가 결과와 원인을
-> 빠르게 확인할 수 있도록 구성했습니다.
+> - 반복적으로 수행하는 Regression 테스트를 자동화하고 정해진 시점에 CI에서 실행해 수동 수행 비용을 줄인다
+> - 업무 시작(통상 09시) 전에 테스트를 완료하고 출근 직후 결과를 확인할 수 있게 한다.
 
-- **GitHub Actions**: `main` 브랜치 Push 시 자동 실행 + 매일 한국시간(KST) 오전 8시 스케줄
+- **GitHub Actions**: `main` 브랜치 Push 시 자동 실행 + 매일 한국시간(KST) 오전 6시 스케줄
   실행(`.github/workflows/test.yml`)
 - **Self-hosted Runner**: `store.laftel.net`이 한국 외 지역 IP를 차단해 GitHub 호스팅
-  러너로는 접속 자체가 불가능하므로, 한국 소재 self-hosted 러너(macOS)를 사용
+  러너로는 접속 자체가 불가능하므로, self-hosted 러너(macOS)를 사용
 - **Report**: 실행마다 pytest-html(`report.html`)/JUnit XML(`results.xml`)을 생성하며,
   테스트 함수별 TC-ID를 리포트에 함께 기록해 결과와 Test Case를 바로 매핑할 수 있게 함
 - **Artifact**: 리포트(`reports/`)와 실패 스크린샷(`screenshots/`)을 GitHub Actions
@@ -194,41 +193,42 @@ CI가 실패했을 때 실제 문제인지 알려진 일시적 타이밍 이슈(
 bash automation/scripts/verify_ci_failures_locally.sh [RUN_ID]   # 생략 시 최신 실행
 ```
 
-## 9. ⚠️ Technical Challenges
+## 9. Technical Challenges
 
 ### Google OAuth / CI
 
-- **문제**: Google OAuth 인증은 자동화 브라우저 및 CI 환경에서 보안 정책(자동화 브라우저
-  탐지)에 의해 안정적인 E2E 수행이 어려울 수 있습니다.
-- **접근**: 로그인 UI 자체를 모든 TC에서 반복 검증하기보다, 인증된 Session을 재사용하고
-  테스트 대상 서비스의 핵심 Flow 검증에 집중했습니다.
-- **구현**: 로컬에서 실제 구글 로그인을 1회 수행해 세션 쿠키를 캡처하고
-  (`scripts/export_session_cookies.py`) GitHub Secret(`SESSION_COOKIES_JSON`)으로 저장,
-  CI에서는 이 쿠키를 주입해 로그인 상태를 재현합니다(`conftest.py`의
-  `_login_with_session_cookies`). "로그인 완료 후 리디렉션"처럼 로그인 UI 자체를 검증해야
-  하는 2개 TC(TC-WISHLIST-031/032)만 예외적으로 실제 구글 로그인 흐름과 headless 미적용을
-  유지합니다(`requires_real_browser` 마커). 세션 만료 시 자동 갱신 워크플로우는 두지 않고,
-  수동 재캡처·Secret 갱신 절차를 런북으로 문서화했습니다.
+- **문제**: 
+  Google OAuth 인증은 자동화 브라우저 및 CI 환경에서 보안 정책(자동화 브라우저 탐지)에 의해 안정적인 E2E 수행이 어려움 존재
+- **구현**: 
+  1. 로컬에서 실제 구글 로그인을 1회 수행해 세션 쿠키를 캡처
+  2. GitHub Secret으로 저장
+  3. CI에서 저장한 쿠키를 주입해 로그인 상태를 재현
+- **예외**: 
+  로그인 UI 자체를 검증해야 하는 2개 TC(TC-WISHLIST-031/032)만 예외적으로 실제 구글 로그인 흐름과 headless 미적용 유지 - (`requires_real_browser` 마커)
+
+- 구글 로그인 세션 쿠키 캡쳐 : (`automation/scripts/export_session_cookies.py`) 
+- GitHub Secret : (`SESSION_COOKIES_JSON`)
+- CI에 쿠키 저장 : (`conftest.py`의`_login_with_session_cookies`)
+
 
 ### CI 환경(지역 제한)
 
-- **문제**: `store.laftel.net`이 한국 외 지역 IP를 차단해 GitHub 호스팅 러너(해외
-  데이터센터)에서는 사이트 접속 자체가 불가능합니다.
-- **구현**: 한국 소재 self-hosted 러너로 전환하고, 설치 위치·상태 확인·재시작 방법 등
-  운영 절차를 문서화했습니다.
+- **문제**: 
+  `store.laftel.net`이 한국 외 지역 IP를 차단하여 GitHub 호스팅 러너에서 사이트 접속 불가능
+- **구현**: 
+  1. self-hosted 러너로 전환 (한국) 
+  2. 운영 절차 문서화 (설치 위치·상태 확인·재시작 방법 등 )
 
-### 전체 스위트 실행 시 타이밍 플레이키
+### 전체 스위트 실행 시 타이밍 
 
-- **문제**: 113개 전체 테스트를 15분 이상 연속 실행하면 매번 다른 조합의 테스트에서
-  간헐적 타이밍 이슈가 발생함을 실측으로 확인했습니다.
-- **접근**: 원인을 임의로 추측해 코드로 우회하지 않고, 실패를 로컬에서 재현 확인하는
-  스크립트(`verify_ci_failures_locally.sh`)로 자동화 코드/실제 제품 문제 여부를 판별하는
-  절차를 마련했습니다.
+- **문제**: 
+  전체 테스트를 15분 이상 연속 실행시 매번 다른 조합의 테스트에서 간헐적 타이밍 이슈 발생
+- **구현**: 
+  실패를 로컬에서 재현 확인하는 스크립트 구현 - (`verify_ci_failures_locally.sh`) 
 
-세 이슈의 발견 경위와 실측 근거는 [`AUTOMATION_GUIDE.md`](./docs/automation/AUTOMATION_GUIDE.md)
-7.22·7.23·16절에 기록되어 있습니다.
+- 이슈 발견 경위 및 근거 :  [`AUTOMATION_GUIDE.md`](./docs/automation/AUTOMATION_GUIDE.md) - 7.22·7.23·16절
 
-## 10. 📊 Result
+## 10. Output
 
 - 요구사항 → TC → 자동화 구현으로 이어지는 QA Workflow 구축
 - Feature 단위 PRD/TC 관리 구조 구성(상품상세/카트/주문/찜/검색 5개 Feature)
@@ -236,14 +236,14 @@ bash automation/scripts/verify_ci_failures_locally.sh [RUN_ID]   # 생략 시 �
 - 실제 구현된 E2E Test 113개(전체 설계 TC 152개 중 자동화 대상으로 승인된 범위)
 - Selenium + pytest + POM 기반 Framework 구축
 - Claude Code Agent/Skill 기반 QA Workflow 구성
-- Human Approval 단계 적용(PRD 승인/TC 자동화 대상 선정/Commit/Push)
+- QA Engineer 승인 단계 적용(PRD 승인/Regression TC 최종승인/TC 자동화 대상 선정/Commit/Push)
 - GitHub Actions 기반 CI 구성(self-hosted 러너, 매일 자동 실행)
 - HTML Report 생성
 - Slack 결과 알림 연동
 
 ---
 
-## 11. 📁 Project Structure
+## 11. Project Structure
 
 ```
 laftel-store/
@@ -253,6 +253,8 @@ laftel-store/
 │   ├── agents/            # Sub Agent 정의
 │   └── skills/            # Skill 정의
 ├── .github/workflows/     # CI 워크플로우(test.yml)
+├── scripts/
+│   └── sheets_sync/       # 승인된 TC·자동화 대상 선정 결과를 Google Sheet에 동기화하는 CLI
 └── automation/            # 자동화 코드 (Selenium + pytest + POM)
     ├── conftest.py        # driver / logged_in_driver 등 공용 fixture, TC-ID 리포트 매핑
     ├── pytest.ini
@@ -265,7 +267,7 @@ laftel-store/
     └── screenshots/        # 실패 시 자동 캡처 (git 미포함)
 ```
 
-## 12. 🚀 Installation / How to Run
+## 12. Installation / How to Run
 
 ### 사전 준비물
 
@@ -326,7 +328,7 @@ python3 -m pytest -k "wish" -v                                                  
 - 특정 테스트가 간헐적으로만 실패하면 [`AUTOMATION_GUIDE.md`](./docs/automation/AUTOMATION_GUIDE.md)
   7절(발견된 이슈)과 7.22절(전체 스위트 장시간 실행 시 타이밍 플레이키)을 참고하세요.
 
-## 13. 📚 Documents
+## 13. Documents
 
 | 구분 | 위치 | 비고 |
 |---|---|---|
