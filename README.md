@@ -5,7 +5,7 @@
 Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 
 단순히 AI를 이용해 결과물을 생성하는 것이 아니라, 반복적인 QA 작업은 AI가 보조하고
-요구사항 해석, Test Coverage, 자동화 대상 선정 등 QA 판단이 필요한 단계에는 Human Approval을
+요구사항 해석, Test Coverage, 자동화 대상 선정 등 QA 판단이 필요한 단계에는 QA Engineer의 승인을
 유지하는 구조를 목표로 설계했습니다. 
 
 전체 운영 원칙은 [`CLAUDE.md`](./CLAUDE.md)를 따릅니다.
@@ -15,7 +15,7 @@ Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 1. Project Goal
 2. Requirements
 3. QA Workflow
-4. AI × Human
+4. AI / QA Engineer 역할
 5. Automation Strategy
 6. Test Coverage
 7. Architecture
@@ -32,9 +32,9 @@ Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 
 ### 목표
 
-QA 업무에서 반복적으로 발생하는 요구사항 분석, Test Case 작성, 자동화 대상 선정, 테스트 코드 
-구현 과정을 AI로 보조, QA Engineer의 판단이 필요한 지점은 사람이 통제할 수 있는
-Workflow를 설계하는 것을 목표로 했습니다.
+QA 업무에서 반복적으로 발생하는  
+요구사항 분석, Test Case 작성, 자동화 대상 선정, 테스트 코드 구현 과정을 AI로 보조,  
+QA Engineer의 판단이 필요한 지점에 통제할 수 있는 Workflow를 설계하는 것을 목표로 했습니다.
 
 ### 해결하려는 QA 문제
 
@@ -46,9 +46,8 @@ Workflow를 설계하는 것을 목표로 했습니다.
 
 ## 2. Requirements
 
-본 프로젝트는 라프텔의 실제 내부 기획서(SB)에 접근할 수 없는 개인 포트폴리오 프로젝트입니다.
-따라서 공개된 범위 내에서 확인 가능한 기능과 동작을 기반으로 자동화 프로젝트 수행을 위한 PRD를
-별도로 작성했습니다. 
+본 프로젝트는 라프텔의 실제 내부 기획서(SB)에 접근할 수 없는 개인 포트폴리오 프로젝트입니다.  
+따라서 공개된 범위 내에서 확인 가능한 기능과 동작을 기반으로 자동화 프로젝트 수행을 위한 PRD를 별도로 작성했습니다.  
 이 프로젝트의 PRD는 실제 라프텔의 내부 요구사항 문서가 아니라, 
 **QA Workflow를 검증하기 위한 요구사항 입력값**으로 사용했습니다.
 
@@ -68,8 +67,8 @@ Workflow를 설계하는 것을 목표로 했습니다.
   → QA Engineer 검토 → Test Case 확정 → 자동화 대상 선정 → E2E 자동화 구현
 ```
 
-요구사항에 정의되지 않은 정책이나 Expected Result는 AI가 임의로 결정하지 않고 
-"확인 필요사항"으로 분류하여, QA Engineer의 검토 및 기획 Q&A를 거친 후 TC에 반영하는 방향을 지향합니다.
+요구사항에 정의되지 않은 정책이나 Expected Result는 AI가 임의로 결정하지 않고 "확인 필요사항"으로 분류하여,  
+QA Engineer의 검토 및 기획 Q&A를 거친 후 TC에 반영하는 방향을 지향합니다.
 
 ## 3. QA Workflow
 
@@ -85,14 +84,14 @@ Automation (E2E 구현)
 CI (GitHub Actions 실행 → Report → Slack)
 ```
 
-각 화살표 이전 단계는 사람의 승인을 거쳐야 다음 단계로 넘어갑니다(4절 AI × Human,
-[`CLAUDE.md`](./CLAUDE.md) 18절 User Approval 원칙). 세부 흐름은 `CLAUDE.md` 3절을
-따릅니다.
+각 화살표 이전 단계는 사람의 승인을 거쳐야 다음 단계로 넘어갑니다  
+(4절 AI / QA Engineer 역할,[`CLAUDE.md`](./CLAUDE.md) 18절 User Approval 원칙).  
+세부 흐름은 `CLAUDE.md` 3절을 따릅니다.
 
 ## 4. AI / QA Engineer 역할
 
-AI는 QA Engineer의 판단을 대체하는 것이 아니라, 반복 작업을 줄이고 QA Engineer가 Risk와
-품질 판단에 집중할 수 있도록 보조하는 역할로 사용합니다.
+AI는 QA Engineer의 판단을 대체하는 것이 아니라,  
+반복 작업을 줄이고 QA Engineer가 Risk와 품질 판단에 집중할 수 있도록 보조하는 역할로 사용합니다.
 
 | QA 단계 | AI / Automation | QA Engineer |
 |---|---|---|
@@ -119,10 +118,19 @@ AI는 QA Engineer의 판단을 대체하는 것이 아니라, 반복 작업을 �
 - 외부 시스템 의존성이 지나치게 높은 TC
 - 변경 빈도가 높아 유지보수 비용이 큰 영역 (추정)
 
-세부 평가 기준(Business Criticality/Regression Frequency/Automation Stability/Result
-Determinism/Manual Test Cost/Maintenance Cost 6개 축의 Automation Score, Hard Rule,
-Candidate 판정 기준)은 [`automation-candidate` Skill](./.claude/skills/automation-candidate/)에
-정의되어 있으며, TC별 실제 평가 결과와 최종 QA Decision은
+**세부 평가 기준**
+
+- Automation Score 평가 기준 6개 
+  - Business Criticality  
+  - Regression Frequency  
+  - Automation Stability  
+  - Result Determinism  
+  - Manual Test Cost  
+  - Maintenance Cost  
+
+- 참고 : [`automation-candidate` Skill](./.claude/skills/automation-candidate/)  
+
+- TC별 실제 평가 결과와 최종 QA Decision은
 [`docs/tc/automation-candidates/`](./docs/tc/automation-candidates/)에서 확인할 수 있습니다.
 
 ## 6. Test Coverage
@@ -140,8 +148,8 @@ Candidate 판정 기준)은 [`automation-candidate` Skill](./.claude/skills/auto
 - **Automated**: 사용자 승인을 거쳐 자동화 대상으로 확정되어 실제 구현된 E2E Test 개수
   (`automation/tests/*.py`)
 - 나머지(TC − Automated)는 "5. Automation Strategy"의 Manual 유지 기준 또는 외부 연동
-  의존성 등의 사유로 Hold/Rejected 처리된 TC이며, TC별 사유는
-  `docs/tc/automation-candidates/*.md`에서 확인할 수 있습니다.
+  의존성 등의 사유로 Hold/Rejected 처리된 TC이며,  
+  TC별 사유는 `docs/tc/automation-candidates/*.md`에서 확인할 수 있습니다.
 
 ## 7. Architecture
 
