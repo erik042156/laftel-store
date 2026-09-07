@@ -43,6 +43,17 @@ Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 - AI가 생성한 결과를 검증 없이 사용하는 위험
 - 테스트 실행 및 결과 확인의 반복 작업
 
+### My Contribution
+본 프로젝트는 개인 QA 포트폴리오로, 전체 QA Workflow를 직접 설계하고 AI를 보조 도구로 활용하여 구축했습니다.  
+
+- 요구사항 → TC → 자동화 대상 선정 → E2E → CI/Report로 이어지는 QA Workflow 설계
+- 공개 서비스 분석을 기반으로 프로젝트용 요구사항 작성 및 Test Case 검토·확정
+- 자동화 대상 선정 기준 정의 및 최종 자동화 대상 결정
+- Python/Selenium/pytest/POM 기반 E2E 자동화 구조 설계 및 구현
+- GitHub Actions 기반 Regression 실행 및 Report/Slack 결과 확인 구조 구성
+- Claude Code Agent/Skill의 역할과 QA 승인 지점 설계
+
+
 ## 2. Requirements
 
 본 프로젝트는 라프텔의 실제 내부 기획서(SB)에 접근할 수 없는 개인 포트폴리오 프로젝트입니다.  
@@ -205,38 +216,64 @@ CI가 실패했을 때 실제 문제인지 알려진 일시적 타이밍 이슈(
 bash automation/scripts/verify_ci_failures_locally.sh [RUN_ID]   # 생략 시 최신 실행
 ```
 
-## 9. Technical Challenges
+## 9. Challenges
 
-### Google OAuth / CI
+### Challenge 1. Google OAuth 인증과 CI 환경
 
 - **문제**: 
-  Google OAuth 인증은 자동화 브라우저 및 CI 환경에서 보안 정책(자동화 브라우저 탐지)에 의해 안정적인 E2E 수행이 어려움 존재
-- **구현**: 
-  1. 로컬에서 실제 구글 로그인을 1회 수행해 세션 쿠키를 캡처
-  2. GitHub Secret으로 저장
-  3. CI에서 저장한 쿠키를 주입해 로그인 상태를 재현
-- **예외**: 
-  로그인 UI 자체를 검증해야 하는 2개 TC(TC-WISHLIST-031/032)만 예외적으로 실제 구글 로그인 흐름과 headless 미적용 유지 - (`requires_real_browser` 마커)
+  Google OAuth 인증 -> 자동화 브라우저 및 CI 환경에서 보안 정책(자동화 브라우저 탐지) -> 안정적인 E2E 수행이 어려움 존재
+
+  **판단**:
+  - Google 로그인 자체를 매 Regression마다 반복 자동화하는 것보다, 인증 이후의 서비스 기능을 안정적으로 검증하는 것이 현재 프로젝트의 자동화 목적에 더 적합하다고 판단
+  - 다만 로그인 UI 자체를 검증하는 TC까지 제외하면 로그인 기능의 검증 범위가 사라지기 때문에, 인증 세션을 사용하는 테스트와 실제 로그인 UI를 검증하는 테스트 분리
+
+- **해결**: 
+  1. 로컬에서 정상 로그인 후 인증 Session/Cookie 확보
+  2. 인증 정보를 GitHub Secret으로 관리
+  3. CI 실행 시 Session/Cookie를 주입하여 인증 상태 구성
+  4. 로그인 UI 자체를 검증하는 2개 TC는 실제 브라우저 로그인을 유지
+
+- **결과**: 
+  - Google OAuth 제약이 있는 환경에서도 인증 이후 주요 E2E Regression을 CI에서 반복 실행할 수 있도록 구성
+  - 로그인 기능 자체에 대한 UI 검증 유지
 
 - 구글 로그인 세션 쿠키 캡쳐 : (`automation/scripts/export_session_cookies.py`) 
 - GitHub Secret : (`SESSION_COOKIES_JSON`)
 - CI에 쿠키 저장 : (`conftest.py`의`_login_with_session_cookies`)
 
 
-### CI 환경(지역 제한)
+### Challenge 2. CI Runner의 서비스 접근 제한
 
 - **문제**: 
-  `store.laftel.net`이 한국 외 지역 IP를 차단하여 GitHub 호스팅 러너에서 사이트 접속 불가능
-- **구현**: 
-  1. self-hosted 러너로 전환 (한국) 
-  2. 운영 절차 문서화 (설치 위치·상태 확인·재시작 방법 등 )
+  GitHub-hosted runner에서 Laftel Store에 접근할 경우 지역 제한으로 인해 테스트 대상 서비스에 정상적 접근 불가
 
-### 전체 스위트 실행 시 타이밍 
+- **판단**: 
+  - 실행 환경의 네트워크 위치에 따른 문제 (테스트 코드 자체의 실패 아님 )
+  - 실제 서비스에 접근 가능한 환경에서 CI를 실행하는 것으로 판단
+
+- **해결**:
+  - 국내 네트워크 환경의 self-hosted macOS runner 구성
+  - 기존 pytest E2E 실행 구조는 유지, Runner 환경 변경
+  - 정기 Regression 실행이 가능하도록 GitHub Actions Workflow 구성
+
+- **결과**: 서비스 접근 조건을 충족하면서 기존 E2E Test를 변경하지 않고 CI Regression 환경을 유지
+
+### Challenge 3. 장시간 E2E Suite의 간헐적 실패 
 
 - **문제**: 
-  전체 테스트를 15분 이상 연속 실행시 매번 다른 조합의 테스트에서 간헐적 타이밍 이슈 발생
-- **구현**: 
-  실패를 로컬에서 재현 확인하는 스크립트 구현 - (`verify_ci_failures_locally.sh`) 
+  전체 E2E Suite가 장시간 실행되는 과정에서 일부 테스트가 간헐적으로 실패하는 현상이 발생
+
+- **판단**:
+  - 단일 테스트 및 로컬환경에서는 재현되지 않음
+  - 기능 결함과 자동화 Timing Issue를 구분할 수 있는 재현 절차가 필요
+
+- **해결**:
+  - 실패 테스트를 로컬에서 다시 실행할 수 있는 검증 Script 구성
+  - Screenshot 및 Report를 통해 실패 시점의 상태 확인
+  - 재실행 결과를 기반으로 기능 결함과 자동화 불안정성을 구분
+
+- **결과**: 
+  CI 실패 발생 시 로컬 재현과 Screenshot/Report를 통해 기능 결함과 자동화 불안정성을 구분할 수 있는 검증 절차 마련
 
 - 이슈 발견 경위 및 근거 :  [`AUTOMATION_GUIDE.md`](./docs/automation/AUTOMATION_GUIDE.md) - 7.22·7.23·16절
 
