@@ -106,9 +106,9 @@ Phase 순서대로 구현하되, 실제 페이지 구조를 먼저 확인하고,
 
 ### 4. 코드 구현
 
-- AUTOMATION_GUIDE 3절 디렉터리 구조에 맞춰 Page Object(`automation/pages/`), 테스트
-  코드(`automation/tests/`), 필요 시 `utils/`, `config/`, `test_data/`, `conftest.py`를
-  작성/수정합니다.
+- AUTOMATION_GUIDE 3절 디렉터리 구조에 맞춰 Page Object(`automation/pages/`), Locator
+  전용 클래스(`automation/locators/`, 6.2절 컨벤션), 테스트 코드(`automation/tests/`),
+  필요 시 `utils/`, `config/`, `test_data/`, `conftest.py`를 작성/수정합니다.
 - Page Layer(4.1절, Locator/화면 조작/조회만, Assertion 없음)와 Test Layer(4.2절, 시나리오
   구성/데이터 준비/Assertion) 책임을 분리합니다.
 - 신규 페이지는 `BasePage`를 상속하는 Page 클래스로 작성하고, `BasePage`가 아직 없으면

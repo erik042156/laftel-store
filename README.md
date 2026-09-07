@@ -159,7 +159,8 @@ AI는 QA Engineer의 판단을 대체하는 것이 아니라,
 - **Language**: Python 3.9
 - **E2E Framework**: Selenium 4
 - **Test Runner**: pytest + pytest-html(HTML/JUnit XML 리포트)
-- **설계 패턴**: Page Object Model — 화면 1개당 Page 객체 1개(`automation/pages/`)
+- **설계 패턴**: Page Object Model — 화면 1개당 Page 객체 1개(`automation/pages/`), 로케이터는
+  전용 Locators 클래스(`automation/locators/`)로 분리해 Page가 상속(mixin)
 - **AI 워크플로우**: Claude Code 기반 Sub Agent/Skill(`.claude/agents/`, `.claude/skills/`) —
   PRD 작성, TC 생성, 자동화 대상 선정, Roadmap 작성, 자동화 코드 구현을 각각 단일 책임의
   Agent/Skill로 분리해 역할이 서로 침범하지 않도록 구성([`CLAUDE.md`](./CLAUDE.md) 6절)
@@ -268,6 +269,7 @@ laftel-store/
     ├── requirements.txt
     ├── config/            # BASE_URL, 테스트 상품 ID 등 실측 상수
     ├── pages/             # Page Object (화면 1개당 파일 1개)
+    ├── locators/          # 화면별 Locator 전용 클래스, Page가 상속(mixin)
     ├── tests/             # Feature별 테스트 (TC ID를 docstring에 명시)
     ├── scripts/            # 세션 쿠키 캡처, Slack 알림, CI 실패 로컬 재검증 스크립트
     ├── reports/            # pytest-html / JUnit XML 결과 (git 미포함)

@@ -90,7 +90,7 @@ AUTOMATION_GUIDE.md 1~4절 요약이며, 상세 규칙은 원본 문서를 기�
   대상은 Production 단일 환경(`https://store.laftel.net/`)
 - **아키텍처**: Page Object Model(POM) — 화면 단위 1 Page 클래스, 모든 Page는 `BasePage` 상속,
   Page는 Assertion 금지·Test에서만 Assertion 수행
-- **디렉터리 구조(예정)**: `automation/{pages,tests,utils,config,test_data,screenshots,reports}`,
+- **디렉터리 구조(예정)**: `automation/{pages,locators,tests,utils,config,test_data,screenshots,reports}`,
   `conftest.py`, `pytest.ini`, `requirements.txt` (3절)
 - **코딩 스타일 예외**: Python 코드에 한해 4칸 들여쓰기 + snake_case(PEP8), 전역 CLAUDE.md의
   2칸/camelCase 예외로 사용자 승인됨(1.1절)
@@ -286,3 +286,4 @@ AUTOMATION_GUIDE.md 1~4절 요약이며, 상세 규칙은 원본 문서를 기�
 | 2026-09-05 | Phase 3(order) 구현 중 TC-ORDER-019(PG 결제창 진입)가 나이스페이 결제창의 간헐적 노출로 안정적 자동화가 불가능함을 실측 확인. 사용자 결정에 따라 자동화 보류로 확정하고 8절 리스크 항목을 갱신, Phase 3 자동화 대상을 11건→10건으로 조정 (사용자 승인) | 승인완료 |
 | 2026-09-06 | Phase 3(order) 구현 중 계정에 저장된 배송지가 자동으로 채워지는 신규 기능을 발견, REQ-ORDER-019/TC-ORDER-021로 문서화 및 자동화 대상 확정(Approved)까지 완료. Phase 3 자동화 대상을 10건→11건(TC-ORDER-021 추가)으로 갱신 (사용자 승인) | 승인완료 |
 | 2026-09-06 | Phase Final(CI/CD 및 Slack 알림 연동) 구현 완료. GitHub 호스팅 러너가 store.laftel.net의 한국 IP 제한으로 접근 불가함을 실측 확인해 한국 소재 self-hosted 러너로 전환. 4회의 실제 CI 검증을 통해 headless 다이얼로그 버그, Google 헤드리스 로그인 차단, 일반 타이밍 플레이키를 발견·수정·문서화함. 최종 110/113 통과, Slack 성공/실패 알림 다회 실증 확인 (사용자 승인) | 승인완료 |
+| 2026-09-07 | 로케이터를 Page 클래스에서 전용 Locators 클래스로 분리하는 리팩토링(AUTOMATION_GUIDE.md 2/3/4.1/6.2/18/21절 개정)에 맞춰 3절 디렉터리 구조 목록에 `locators` 추가 (사용자 승인) | 승인완료 |
