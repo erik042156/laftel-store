@@ -103,6 +103,9 @@ Selenium/표준 라이브러리 API 자체가 snake_case이므로 일관성을 �
 - 모든 Page 클래스는 공통 기능을 제공하는 `BasePage`를 상속합니다.
 - Page 객체는 WebDriver 인스턴스 1개만 보유하며, 그 외 상태 변수를 최소화합니다.
 - Page Layer와 Test Layer의 책임은 4절 기준을 따릅니다.
+- 각 Page 클래스는 자신의 화면 전용 Locator를 제공하는 `<PageName>Locators` 클래스를
+  상속(mixin)합니다. Locator 정의와 화면 조작 책임을 분리하기 위함이며, 상세 규칙은
+  6.2절을 따릅니다.
 
 ---
 
@@ -115,6 +118,9 @@ Selenium/표준 라이브러리 API 자체가 snake_case이므로 일관성을 �
 automation/
 ├── pages/               # Page Object 클래스
 │   ├── base_page.py
+│   └── ...
+├── locators/             # 화면별 Locator 전용 클래스(Page 클래스 밖으로 분리, 6.2절)
+│   ├── base_locators.py
 │   └── ...
 ├── tests/                # 테스트 코드 (pytest)
 │   ├── test_cart.py
@@ -160,7 +166,10 @@ scripts/sheets_sync/                  # 기존 Google Sheet 연동 스크립트(
 
 ### 4.1 Page Layer 책임
 
-- 대상 화면의 모든 Locator를 클래스 상단에 상수로 정의합니다.
+- 대상 화면의 모든 Locator는 Page 클래스가 아닌 전용 Locators 클래스
+  (`locators/<page_name>_locators.py`의 `<PageName>Locators`)에 정의합니다. Page
+  클래스는 이 Locators 클래스를 상속(mixin)해 `self.LOCATOR_NAME`으로 그대로
+  참조합니다(6.2절 참고).
 - 클릭/입력/스크롤 등 화면 조작 메서드를 제공합니다.
 - 조회 메서드는 값을 **반환만** 합니다.
 - **Assertion을 절대 수행하지 않습니다.**
@@ -173,11 +182,14 @@ scripts/sheets_sync/                  # 기존 Google Sheet 연동 스크립트(
 - 원칙: Page는 "어떻게 하는가", Test는 "무엇을 검증하는가"만 담당합니다.
 
 ```python
-# pages/search_page.py (예시 — 실제 Locator는 구현 시 5절 절차로 확인)
-class SearchPage(BasePage):
+# locators/search_locators.py (예시 — 실제 Locator는 구현 시 5절 절차로 확인)
+class SearchLocators:
     KEYWORD_INPUT = (By.CSS_SELECTOR, "input[placeholder='검색어를 입력해주세요']")
     SEARCH_RESULT_COUNT = (By.CSS_SELECTOR, ".search-result-count")
 
+
+# pages/search_page.py
+class SearchPage(SearchLocators, BasePage):
     def search(self, keyword: str) -> None:
         self.type_text(self.KEYWORD_INPUT, keyword)
 
@@ -274,8 +286,18 @@ Selenium 코드를 작성하기 전에 다음 순서로 실제 페이지를 확�
 
 ### 6.2 정의 위치
 
-모든 Locator는 Page 클래스 상단에 `UPPER_SNAKE_CASE` 상수로 정의합니다. 메서드 내부에
+모든 Locator는 Page 클래스가 아닌 전용 Locators 클래스에 `UPPER_SNAKE_CASE` 상수로
+정의합니다. Locators 클래스는 `locators/` 디렉터리 아래 `<page_name>_locators.py`
+파일에 `<PageName>Locators`라는 이름으로 작성하고, 대상 Page 클래스가 이를
+상속(mixin)합니다(예: `class SearchPage(SearchLocators, BasePage):`). 메서드 내부에
 Locator를 하드코딩하지 않습니다.
+
+파라미터에 따라 값이 달라지는 동적 Locator(인덱스/ID 등이 포함된 XPath)는, `self.driver`나
+다른 화면 조작 메서드를 호출하지 않고 `(By.X, "...")` 튜플만 구성해 반환한다면 정적 상수와
+동일하게 Locators 클래스의 메서드로 정의합니다. 여러 Locator 조합에 재사용되는 XPath
+조각은 By 튜플이 아닌 순수 문자열 상수로 Locators 클래스에 정의할 수 있습니다(예:
+`SearchResultLocators.SORT_DIALOG_OPEN`). driver 상호작용이나 반복/조건 로직이 포함된
+메서드는 Page 클래스에 남깁니다.
 
 ---
 
@@ -985,6 +1007,8 @@ def login_page(driver):
 | 테스트 함수명 | `test_` 접두사 | `test_login_with_valid_credentials` |
 | 변수명 | snake_case | `search_keyword`, `product_count` |
 | 상수(Locator 등) | UPPER_SNAKE_CASE | `LOGIN_BUTTON`, `EMAIL_INPUT` |
+| Locators 클래스 | PascalCase + `Locators` 접미사 | `CartLocators`, `SearchLocators` |
+| Locators 파일명 | snake_case + `_locators.py` | `cart_locators.py` |
 
 ---
 
@@ -1043,7 +1067,9 @@ Test Environment 요인에 따른 불안정성(7.1절, 22절)에 노출될 여�
 
 - [ ] `time.sleep()`을 사용하지 않았는가? (Explicit Wait 사용)
 - [ ] Full XPath를 사용하지 않았는가?
-- [ ] 모든 Locator가 Page 클래스 상단에 상수로 정의되어 있는가?
+- [ ] 모든 Locator가 Page 클래스가 아닌 전용 `<PageName>Locators` 클래스에 정의되어
+      있는가?
+- [ ] Page 클래스가 대응하는 Locators 클래스를 상속(mixin)하고 있는가?
 - [ ] Page Layer에 Assertion이 없는가?
 - [ ] 모든 Page 클래스가 `BasePage`를 상속하는가?
 - [ ] 각 테스트가 다른 테스트 실행 순서에 의존하지 않는가?
@@ -1240,3 +1266,8 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
  pytest_html_results_table_header / pytest_html_results_table_row 훅 추가,\
  notify-ci-slack.sh가 JUnit XML의 properties에서 tc_id를 읽어 실패 목록에 표시하도록\
  수정 (사용자 요청) | 승인완료 |
+| 2026-09-07 | 2/3/4.1/6.2/18/21절 개정 — 로케이터를 Page 클래스 밖으로 완전히 분리하는\
+ 리팩토링 결정에 따라 `automation/locators/` 전용 디렉터리와 `<PageName>Locators`\
+ mixin 컨벤션을 신설. 16개 Page 클래스 전체와 `automation/pages/locators/` 대신\
+ `automation/locators/`(pages/와 동일 레벨) 구조로 실제 코드에 적용하고 전체 pytest\
+ 스위트(113건)로 회귀 없음을 확인 (사용자 승인) | 승인완료 |

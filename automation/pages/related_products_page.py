@@ -1,12 +1,8 @@
-from selenium.webdriver.common.by import By
-
+from locators.related_products_locators import RelatedProductsLocators
 from pages.base_page import BasePage
 
 
-class RelatedProductsPage(BasePage):
-    TITLE = (By.TAG_NAME, "h1")
-    GRID_ITEM_LINKS = (By.CSS_SELECTOR, 'a[href^="/products/"]')
-
+class RelatedProductsPage(RelatedProductsLocators, BasePage):
     def get_title_text(self):
         return self.get_text(self.TITLE)
 

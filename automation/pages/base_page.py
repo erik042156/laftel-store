@@ -1,11 +1,11 @@
 import logging
 
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import DEFAULT_TIMEOUT
+from locators.base_locators import BaseLocators
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 STATUS_BADGE_LABELS = {"품절", "판매종료", "예약구매", "NEW"}
 
 
-class BasePage:
+class BasePage(BaseLocators):
     def __init__(self, driver):
         self.driver = driver
 
@@ -64,7 +64,7 @@ class BasePage:
         return self.driver.current_url
 
     def get_status_badge_text(self, card):
-        for span in card.find_elements(By.XPATH, ".//span[not(*)]"):
+        for span in card.find_elements(*self.STATUS_BADGE_SPAN):
             if span.text in STATUS_BADGE_LABELS:
                 return span.text
         return None

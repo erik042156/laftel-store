@@ -1,12 +1,8 @@
-from selenium.webdriver.common.by import By
-
+from locators.exchange_return_info_locators import ExchangeReturnInfoLocators
 from pages.base_page import BasePage
 
 
-class ExchangeReturnInfoPage(BasePage):
-    TITLE = (By.XPATH, '//h1[normalize-space(.)="교환/반품 안내"]')
-    DIALOG_CONTENT = (By.XPATH, '//h1[normalize-space(.)="교환/반품 안내"]/ancestor::div[@role="dialog"]')
-
+class ExchangeReturnInfoPage(ExchangeReturnInfoLocators, BasePage):
     def get_title_text(self):
         return self.get_text(self.TITLE)
 

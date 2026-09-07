@@ -1,12 +1,8 @@
-from selenium.webdriver.common.by import By
-
+from locators.seller_info_locators import SellerInfoLocators
 from pages.base_page import BasePage
 
 
-class SellerInfoPage(BasePage):
-    TITLE = (By.XPATH, '//h1[normalize-space(.)="판매자 정보"]')
-    DIALOG_CONTENT = (By.XPATH, '//h1[normalize-space(.)="판매자 정보"]/ancestor::div[@role="dialog"]')
-
+class SellerInfoPage(SellerInfoLocators, BasePage):
     def get_title_text(self):
         return self.get_text(self.TITLE)
 
