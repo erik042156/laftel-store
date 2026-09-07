@@ -32,11 +32,10 @@ Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 
 ### 목표
 
-QA 업무에서 반복적으로 발생하는  
-요구사항 분석, Test Case 작성, 자동화 대상 선정, 테스트 코드 구현 과정을 AI로 보조,  
-QA Engineer의 판단이 필요한 지점에 통제할 수 있는 Workflow를 설계하는 것을 목표로 했습니다.
+반복적인 QA업무에 AI를 활용하되,  
+요구사항 분석이나 Test Case 최종 승인, 자동화 대상 선정등 같이 QA 판단이 필요한 단계는 QA가 직접 검토하는 Workflow를 설계하는 것을 목표로 했습니다.
 
-### 해결하려는 QA 문제
+### 해결하고자 한 사항
 
 - 요구사항 → TC → 자동화 코드 사이의 추적성 부족
 - 반복적인 Test Case 및 자동화 코드 작성 비용
@@ -77,7 +76,11 @@ Requirements (PRD)
       ↓
 TC Draft (Test Case 초안)
       ↓
-QA Approval (자동화 대상 선정 승인)
+QA Review / TC 확정 
+      ↓
+자동화 대상 선정 
+      ↓
+QA Decision (자동화 대상 선정 승인)
       ↓
 Automation (E2E 구현)
       ↓
@@ -238,16 +241,12 @@ bash automation/scripts/verify_ci_failures_locally.sh [RUN_ID]   # 생략 시 �
 
 ## 10. Output
 
-- 요구사항 → TC → 자동화 구현으로 이어지는 QA Workflow 구축
-- Feature 단위 PRD/TC 관리 구조 구성(상품상세/카트/주문/찜/검색 5개 Feature)
-- TC-ID ↔ E2E Test 추적 구조 구성(리포트·Slack 알림에서 TC-ID 매핑)
-- 실제 구현된 E2E Test 113개(전체 설계 TC 152개 중 자동화 대상으로 승인된 범위)
-- Selenium + pytest + POM 기반 Framework 구축
-- Claude Code Agent/Skill 기반 QA Workflow 구성
-- QA Engineer 승인 단계 적용(PRD 승인/Regression TC 최종승인/TC 자동화 대상 선정/Commit/Push)
-- GitHub Actions 기반 CI 구성(self-hosted 러너, 매일 자동 실행)
-- HTML Report 생성
-- Slack 결과 알림 연동
+- 요구사항 → TC → 자동화 구현으로 이어지는 Claude Code Agent/Skill 기반 QA Workflow 구축
+- 전체 152개 TC 중 113개 E2E 자동화
+- TC-ID ↔ 자동화 코드 ↔ 테스트 결과 추적 구조 구성
+- Selenium + pytest + POM 기반 자동화 Framework 구축
+- GitHub Actions 기반 정기 Regression 실행
+- HTML Report / 실패 Screenshot / Slack 결과 알림 구성
 
 ---
 
