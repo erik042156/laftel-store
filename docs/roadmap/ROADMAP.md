@@ -6,7 +6,7 @@
 관련 Automation Candidate 문서: [tc/automation-candidates/product-detail.md, tc/automation-candidates/cart.md, tc/automation-candidates/order.md, tc/automation-candidates/wishlist.md, tc/automation-candidates/search.md]
 관련 Automation Guide: docs/automation/AUTOMATION_GUIDE.md
 최초 작성일: 2026-09-05
-최근 변경일: 2026-09-05
+최근 변경일: 2026-09-14
 승인일: 2026-09-05
 ---
 
@@ -26,12 +26,12 @@
 
   | Feature | Approved TC 수 |
   |---|---|
-  | product-detail (상품상세) | 34 |
+  | product-detail (상품상세) | 33 |
   | cart (카트) | 16 |
   | order (주문) | 11 |
   | wishlist (찜) | 28 |
   | search (검색) | 23 |
-  | **합계** | **112** |
+  | **합계** | **111** |
 
 - **Out of Scope(이번 Roadmap 범위 밖)**
   - Shrimp Task 생성 및 세부 작업 분해(이후 별도 단계)
@@ -140,17 +140,17 @@ AUTOMATION_GUIDE.md 1~4절 요약이며, 상세 규칙은 원본 문서를 기�
 
 ### Phase 1: 상품상세(product-detail) 자동화 구현
 
-- **대상 TC**: 34건 — TC-PRODUCT-DETAIL-002, 003, 004, 005, 006, 007, 010, 011, 012,
-  013, 014, 015, 019, 020, 024, 025, 026, 027, 028, 031, 032, 033, 034, 035, 036, 037, 038,
+- **대상 TC**: 33건 — TC-PRODUCT-DETAIL-002, 003, 004, 005, 006, 007, 010, 011, 012,
+  013, 014, 015, 019, 020, 024, 025, 027, 028, 031, 032, 033, 034, 035, 036, 037, 038,
   039, 040, 042, 043, 044, 045, 046
   (TC-PRODUCT-DETAIL-008은 사용자 결정에 따라 이번 구현 범위에서 제외 — 1절 Out of Scope,
-  8절 참고)
+  8절 참고. TC-PRODUCT-DETAIL-026은 실제 사이트에서 "교환/반품 안내" 아코디언 항목 자체가
+  제거되어 2026-09-14 결번 처리 — 변경 이력 참고)
 - **필요 Page Object**
   - `ProductDetailPage`(상단 바, 이미지 캐러셀, 작품명/가격, 배송정보, "같은 작품 굿즈"
     캐러셀, 상세정보 탭/더보기, 하단 고정 찜·구매 영역, 옵션/수량 선택, 상태별 버튼)
-  - `ProductInfoPage`(`/products/{id}/product-info`), `ExchangeReturnInfoPage`
-    (`/products/{id}/exchange-return-info`), `SellerInfoPage`(`/products/{id}/seller-info`),
-    `NoticePage`(`/products/{id}/notice`) — 아코디언 4개 항목
+  - `ProductInfoPage`(`/products/{id}/product-info`), `SellerInfoPage`
+    (`/products/{id}/seller-info`), `NoticePage`(`/products/{id}/notice`) — 아코디언 3개 항목
   - `RelatedProductsPage`(`/products/{id}/related`, "더보기" 목록)
   - `NotFoundPage`(커스텀 404 에러 페이지, TC-007)
   - 진입 경로 전제 조건 확보용 **최소** Page Object: `MyStorePage`(`/my`, TC-003 진입용),
@@ -246,7 +246,7 @@ AUTOMATION_GUIDE.md 1~4절 요약이며, 상세 규칙은 원본 문서를 기�
 
 | Feature | 확정 TC 수 | 대상 TC ID | 필요 Page Object | 의존 Feature | Phase |
 |---|---|---|---|---|---|
-| product-detail | 34 (TC-PRODUCT-DETAIL-008 제외) | TC-PRODUCT-DETAIL-002,003,004,005,006,007,010,011,012,013,014,015,019,020,024,025,026,027,028,031,032,033,034,035,036,037,038,039,040,042,043,044,045,046 | ProductDetailPage, ProductInfoPage, ExchangeReturnInfoPage, SellerInfoPage, NoticePage, RelatedProductsPage, NotFoundPage, (최소)MyStorePage, (최소)카트/찜 내비게이션 | 없음(로그인만 필요) | Phase 1 |
+| product-detail | 33 (TC-PRODUCT-DETAIL-008, 026 제외) | TC-PRODUCT-DETAIL-002,003,004,005,006,007,010,011,012,013,014,015,019,020,024,025,027,028,031,032,033,034,035,036,037,038,039,040,042,043,044,045,046 | ProductDetailPage, ProductInfoPage, SellerInfoPage, NoticePage, RelatedProductsPage, NotFoundPage, (최소)MyStorePage, (최소)카트/찜 내비게이션 | 없음(로그인만 필요) | Phase 1 |
 | cart | 16 | TC-CART-001,002,007,008,009,010,012,013,014,015,016,018,019,020,022,023 | CartPage | product-detail(담기 액션) | Phase 2 |
 | order | 11 | TC-ORDER-001,002,004,005,007,009,015,017,018,019,020 | CheckoutPage | product-detail(바로구매) + cart(구매하기) | Phase 3 |
 | wishlist | 28 | TC-WISHLIST-001,002,003,004,005,006,007,008,009,012,014,015,016,017,020,021,022,023,024,025,026,027,028,029,030,031,032,033 | WishlistPage, MyStorePage(완성), 메인 진입점 최소 Page Object, 로그인 유도 팝업 컴포넌트 | product-detail(찜 토글 개념) | Phase 4 |
@@ -287,3 +287,4 @@ AUTOMATION_GUIDE.md 1~4절 요약이며, 상세 규칙은 원본 문서를 기�
 | 2026-09-06 | Phase 3(order) 구현 중 계정에 저장된 배송지가 자동으로 채워지는 신규 기능을 발견, REQ-ORDER-019/TC-ORDER-021로 문서화 및 자동화 대상 확정(Approved)까지 완료. Phase 3 자동화 대상을 10건→11건(TC-ORDER-021 추가)으로 갱신 (사용자 승인) | 승인완료 |
 | 2026-09-06 | Phase Final(CI/CD 및 Slack 알림 연동) 구현 완료. GitHub 호스팅 러너가 store.laftel.net의 한국 IP 제한으로 접근 불가함을 실측 확인해 한국 소재 self-hosted 러너로 전환. 4회의 실제 CI 검증을 통해 headless 다이얼로그 버그, Google 헤드리스 로그인 차단, 일반 타이밍 플레이키를 발견·수정·문서화함. 최종 110/113 통과, Slack 성공/실패 알림 다회 실증 확인 (사용자 승인) | 승인완료 |
 | 2026-09-07 | 로케이터를 Page 클래스에서 전용 Locators 클래스로 분리하는 리팩토링(AUTOMATION_GUIDE.md 2/3/4.1/6.2/18/21절 개정)에 맞춰 3절 디렉터리 구조 목록에 `locators` 추가 (사용자 승인) | 승인완료 |
+| 2026-09-14 | 사용자가 실제 사이트에서 "교환/반품 안내" 아코디언 항목이 삭제된 것을 확인함에 따라 Feature PRD(REQ-PRODUCT-DETAIL-028 결번)·TC 문서(TC-PRODUCT-DETAIL-026 결번)가 재승인됨. 이에 맞춰 Phase 1 대상 TC를 34건→33건(TC-PRODUCT-DETAIL-026 제외)으로, 합계를 112건→111건으로 갱신하고, 필요 Page Object 목록에서 `ExchangeReturnInfoPage` 제거, "아코디언 4개 항목"→"3개 항목"으로 정정. 이미 구현되어 있던 해당 자동화 코드(테스트 함수, Page Object, Locator)도 함께 삭제 (사용자 승인, 재승인) | 승인완료 |

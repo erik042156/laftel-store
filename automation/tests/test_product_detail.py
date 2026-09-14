@@ -7,7 +7,6 @@ from config.settings import (
     PRODUCT_ID_WITH_OPTIONS,
 )
 from pages.cart_page import CartPage
-from pages.exchange_return_info_page import ExchangeReturnInfoPage
 from pages.my_store_page import MyStorePage
 from pages.not_found_page import NotFoundPage
 from pages.notice_page import NoticePage
@@ -216,27 +215,6 @@ def test_product_info_accordion_navigates_and_shows_table(driver):
     actual_content = product_info_page.get_content_text()
     for expected_label in ("브랜드", "원산지", "제조사", "공급사", "자체분류"):
         assert expected_label in actual_content, f"Expected '{expected_label}' in content, but got {actual_content}"
-
-
-def test_exchange_return_info_accordion_navigates_and_shows_content(driver):
-    """TC-PRODUCT-DETAIL-026"""
-    product_detail_page = ProductDetailPage(driver)
-    product_detail_page.open(PRODUCT_ID_ON_SALE)
-
-    product_detail_page.click_exchange_return_info_accordion()
-    expected_url = f"{BASE_URL}products/{PRODUCT_ID_ON_SALE}/exchange-return-info"
-    product_detail_page.wait_for_url_to_be(expected_url)
-
-    actual_url = product_detail_page.get_current_url()
-    assert actual_url == expected_url, f"Expected {expected_url}, but got {actual_url}"
-
-    exchange_return_info_page = ExchangeReturnInfoPage(driver)
-    actual_title = exchange_return_info_page.get_title_text()
-    assert actual_title == "교환/반품 안내", f"Expected '교환/반품 안내', but got {actual_title}"
-
-    actual_content = exchange_return_info_page.get_content_text()
-    assert "7일 이내" in actual_content, f"Expected '7일 이내' in content, but got {actual_content}"
-    assert "반송" in actual_content, f"Expected '반송' in content, but got {actual_content}"
 
 
 def test_seller_info_accordion_navigates_and_shows_content(driver):

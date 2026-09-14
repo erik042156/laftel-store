@@ -89,9 +89,6 @@ class ProductDetailPage(ProductDetailLocators, BasePage):
     def click_product_info_accordion(self):
         self.click(self.PRODUCT_INFO_ACCORDION)
 
-    def click_exchange_return_info_accordion(self):
-        self.click(self.EXCHANGE_RETURN_INFO_ACCORDION)
-
     def click_seller_info_accordion(self):
         self.click(self.SELLER_INFO_ACCORDION)
 

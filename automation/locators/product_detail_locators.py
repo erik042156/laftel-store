@@ -15,7 +15,6 @@ class ProductDetailLocators:
     RELATED_MORE_LINK = (By.CSS_SELECTOR, 'a[href$="/related"]')
     DETAIL_MORE_TOGGLE = (By.XPATH, '//button[normalize-space(.)="상세정보 더보기" or normalize-space(.)="상세정보 접기"]')
     PRODUCT_INFO_ACCORDION = (By.XPATH, '//button[normalize-space(.)="상품정보 제공고시"]')
-    EXCHANGE_RETURN_INFO_ACCORDION = (By.XPATH, '//button[normalize-space(.)="교환/반품 안내"]')
     SELLER_INFO_ACCORDION = (By.XPATH, '//button[normalize-space(.)="판매자 정보"]')
     NOTICE_ACCORDION = (By.XPATH, '//button[normalize-space(.)="유의사항"]')
     BUY_BUTTON = (
