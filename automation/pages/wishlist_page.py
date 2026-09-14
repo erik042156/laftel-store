@@ -1,3 +1,5 @@
+import re
+
 from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import BASE_URL, DEFAULT_TIMEOUT
@@ -72,6 +74,18 @@ class WishlistPage(WishlistLocators, BasePage):
 
     def wait_for_work_section_absent(self, ip_id):
         WebDriverWait(self.driver, DEFAULT_TIMEOUT).until(lambda driver: not self.is_work_section_present(ip_id))
+
+    def get_work_section_product_ids(self, ip_id):
+        index = self.find_work_section_index(ip_id)
+        if index is None:
+            return []
+        links = self.driver.find_elements(*self._work_section_product_links_locator(index))
+        product_ids = []
+        for link in links:
+            match = re.search(r"/products/(\d+)", link.get_attribute("href"))
+            if match and match.group(1) not in product_ids:
+                product_ids.append(match.group(1))
+        return product_ids
 
     def get_product_status_badge_text(self, product_id):
         card = self._wait(self.product_link_locator(product_id))

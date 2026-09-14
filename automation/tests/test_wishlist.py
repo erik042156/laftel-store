@@ -3,8 +3,6 @@ import pytest
 from config.settings import (
     BASE_URL,
     IP_ID_ON_SALE,
-    IP_PRODUCT_ID_A,
-    IP_PRODUCT_ID_B,
     PRODUCT_ID_HIGH_PRICE,
     PRODUCT_ID_ON_SALE,
     PRODUCT_ID_SOLD_OUT,
@@ -12,6 +10,7 @@ from config.settings import (
 )
 from conftest import _complete_google_login
 from pages.home_page import HomePage
+from pages.ip_page import IpPage
 from pages.my_store_page import MyStorePage
 from pages.product_detail_page import ProductDetailPage
 from pages.wishlist_page import WishlistPage
@@ -303,38 +302,49 @@ def test_work_section_carousel_item_heart_click_removes_only_that_item(logged_in
     home_page.open_ip_page(IP_ID_ON_SALE)
     _ensure_ip_wished(home_page, filled=True)
 
-    product_detail_page = ProductDetailPage(logged_in_driver)
-    for product_id in (IP_PRODUCT_ID_A, IP_PRODUCT_ID_B):
-        product_detail_page.open(product_id)
-        if not product_detail_page.is_wish_icon_filled():
-            product_detail_page.click_wish_icon()
-            product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "true")
+    wishlist_page = WishlistPage(logged_in_driver)
+    wishlist_page.open()
+    wishlist_page.click_work_tab()
+    wishlist_page.wait_for_work_section_present(IP_ID_ON_SALE)
+
+    # 캐러셀에 실제로 노출된 상품 ID를 읽어 사용한다(고정 ID를 가정하면 캐러셀 구성이
+    # 바뀔 때마다 대상 상품이 없어 클릭이 타임아웃되는 문제가 있었다).
+    product_ids = wishlist_page.get_work_section_product_ids(IP_ID_ON_SALE)
+    assert len(product_ids) >= 2, (
+        f"Expected at least 2 products in the IP-{IP_ID_ON_SALE} work section carousel, "
+        f"but got {len(product_ids)}"
+    )
+    product_id_a, product_id_b = product_ids[0], product_ids[1]
+
+    for product_id in (product_id_a, product_id_b):
+        if not wishlist_page.is_product_wish_icon_filled(product_id):
+            wishlist_page.click_product_wish_icon(product_id)
+            wishlist_page.wait_for_product_wish_icon_state(product_id, filled=True)
 
     try:
-        wishlist_page = WishlistPage(logged_in_driver)
-        wishlist_page.open()
-        wishlist_page.click_work_tab()
-        wishlist_page.wait_for_work_section_present(IP_ID_ON_SALE)
-
-        wishlist_page.click_product_wish_icon(IP_PRODUCT_ID_A)
-        wishlist_page.wait_for_product_wish_icon_state(IP_PRODUCT_ID_A, filled=False)
+        wishlist_page.click_product_wish_icon(product_id_a)
+        wishlist_page.wait_for_product_wish_icon_state(product_id_a, filled=False)
 
         assert wishlist_page.is_work_section_present(IP_ID_ON_SALE), (
             "Expected the IP section to remain (IP-level wish is unaffected by removing one product)"
         )
 
         wishlist_page.click_product_tab()
-        wishlist_page.wait_for_product_absent(IP_PRODUCT_ID_A)
-        assert not wishlist_page.is_product_present(IP_PRODUCT_ID_A), (
+        wishlist_page.wait_for_product_absent(product_id_a)
+        assert not wishlist_page.is_product_present(product_id_a), (
             "Expected the removed item to disappear from 상품 tab without reload"
         )
-        assert wishlist_page.is_product_present(IP_PRODUCT_ID_B), "Expected the still-wished item to remain on 상품 tab"
+        assert wishlist_page.is_product_present(product_id_b), "Expected the still-wished item to remain on 상품 tab"
     finally:
-        for product_id in (IP_PRODUCT_ID_A, IP_PRODUCT_ID_B):  # 테스트 종료 후 찜 상태 원복
-            product_detail_page.open(product_id)
-            if product_detail_page.is_wish_icon_filled():
-                product_detail_page.click_wish_icon()
-                product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "false")
+        # "상품" 탭에서는 방금 찜 해제한 product_id_a가 목록에서 사라진 상태라 조회가
+        # 항상 타임아웃되므로, 두 상품이 모두(찜 여부와 무관하게) 노출되는 "작품" 탭으로
+        # 돌아온 뒤 원복한다.
+        wishlist_page.click_work_tab()
+        wishlist_page.wait_for_work_section_present(IP_ID_ON_SALE)
+        for product_id in (product_id_a, product_id_b):  # 테스트 종료 후 찜 상태 원복
+            if wishlist_page.is_product_wish_icon_filled(product_id):
+                wishlist_page.click_product_wish_icon(product_id)
+                wishlist_page.wait_for_product_wish_icon_state(product_id, filled=False)
 
         home_page.open_ip_page(IP_ID_ON_SALE)
         _ensure_ip_wished(home_page, filled=False)
@@ -404,8 +414,19 @@ def test_edit_mode_shows_select_all_and_action_links(logged_in_driver):
 
 def test_select_all_checkbox_selects_all_cards(logged_in_driver):
     """TC-WISHLIST-021"""
+    home_page = HomePage(logged_in_driver)
+    home_page.open_ip_page(IP_ID_ON_SALE)
+    ip_page = IpPage(logged_in_driver)
+    # IP 페이지에 실제로 노출된 상품 ID를 읽어 사용한다(고정 ID를 가정하면 카탈로그
+    # 구성이 바뀔 때마다 대상 상품을 찾지 못하는 문제가 있었다).
+    product_ids = ip_page.get_product_ids()
+    assert len(product_ids) >= 2, (
+        f"Expected at least 2 products under IP-{IP_ID_ON_SALE}, but got {len(product_ids)}"
+    )
+    product_id_a, product_id_b = product_ids[0], product_ids[1]
+
     product_detail_page = ProductDetailPage(logged_in_driver)
-    for product_id in (IP_PRODUCT_ID_A, IP_PRODUCT_ID_B):
+    for product_id in (product_id_a, product_id_b):
         product_detail_page.open(product_id)
         if not product_detail_page.is_wish_icon_filled():
             product_detail_page.click_wish_icon()
@@ -414,7 +435,7 @@ def test_select_all_checkbox_selects_all_cards(logged_in_driver):
     wishlist_page = WishlistPage(logged_in_driver)
     try:
         wishlist_page.open()
-        wishlist_page.wait_for_product_present(IP_PRODUCT_ID_A)
+        wishlist_page.wait_for_product_present(product_id_a)
         wishlist_page.click_edit_link()
 
         total_count = wishlist_page.get_item_card_count()
@@ -431,7 +452,7 @@ def test_select_all_checkbox_selects_all_cards(logged_in_driver):
         if not wishlist_page.is_edit_link_present():  # 테스트 종료 후 편집 모드 해제
             wishlist_page.click_cancel_edit()
 
-        for product_id in (IP_PRODUCT_ID_A, IP_PRODUCT_ID_B):  # 찜 상태 원복
+        for product_id in (product_id_a, product_id_b):  # 찜 상태 원복
             product_detail_page.open(product_id)
             if product_detail_page.is_wish_icon_filled():
                 product_detail_page.click_wish_icon()

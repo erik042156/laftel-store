@@ -61,6 +61,12 @@ class WishlistLocators:
             '/following-sibling::button[@aria-label="찜하기" or @aria-label="찜 해제"][1]',
         )
 
+    def _work_section_product_links_locator(self, index=1):
+        return (
+            By.XPATH,
+            f'({self.WORK_SECTION[1]})[{index}]//a[starts-with(@href, "/products/")]',
+        )
+
     def _product_wish_icon_locator(self, product_id):
         # 비활성 탭의 패널도 DOM에 함께 남아있어(7.4/7.13절 유사 문제), href만으로
         # 매칭하면 숨겨진 패널의 동일 상품 카드가 먼저 잡혀 클릭이 항상 타임아웃될 수

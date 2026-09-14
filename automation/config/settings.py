@@ -8,8 +8,8 @@ LOGIN_LANDING_URL = "https://laftel.net/auth/login"
 LOGIN_METHOD = "google"
 WINDOW_SIZE = (1600, 1000)
 
-# Playwright MCP로 2026-09-05 실측한 테스트 상품 ID
-PRODUCT_ID_ON_SALE = "4439"
+# 테스트 상품 ID
+PRODUCT_ID_ON_SALE = "3630"
 PRODUCT_ID_NOT_FOUND = "2"
 PRODUCT_ID_WITH_OPTIONS = "553"
 PRODUCT_ID_SOLD_OUT = "3029"
@@ -17,11 +17,6 @@ PRODUCT_ID_SALE_ENDED = "1608"
 PRODUCT_ID_HIGH_PRICE = "3747"  # 344,000원 — 묶음배송비 100,000원 이상 무료 조건 검증용
 IP_ID_ON_SALE = "103"  # PRODUCT_ID_ON_SALE(4439)의 작품 페이지
 SEARCH_KEYWORD_WITH_RESULTS = "피스"  # 찜 아이콘이 있는 검색 결과가 노출되는 것을 실측으로 확인한 키워드
-# IP_ID_ON_SALE(103, 하츠네미쿠)에 속한 서로 다른 상품 2건 (찜 페이지 "작품" 탭 TC용).
-# 같은 작품의 4499/4497 등은 예약구매 상품이라 구매하기 버튼 문구가 달라 기존
-# ProductDetailPage.BOTTOM_WISH_ICON 로케이터가 매칭되지 않으므로 제외했다(AUTOMATION_GUIDE 7.12절).
-IP_PRODUCT_ID_A = "4440"
-IP_PRODUCT_ID_B = "4441"
 
 # Phase 5(검색) TC-SEARCH-012~014용. 검색은 키워드 단어 단위로 넓게 매칭되어(예: "피스"
 # 검색에도 "피규어" 등이 함께 노출됨) 특정 상품이 검색 결과 1페이지(20건)에 실제로
