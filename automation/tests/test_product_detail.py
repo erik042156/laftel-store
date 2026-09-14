@@ -97,14 +97,17 @@ def test_carousel_next_updates_pagination(driver):
     page = ProductDetailPage(driver)
     page.open(PRODUCT_ID_ON_SALE)
 
-    initial_pagination = page.get_carousel_pagination_text()
-    assert initial_pagination == "1/4", f"Expected 1/4, but got {initial_pagination}"
+    current, total = page.get_carousel_pagination_counts()
+    assert current == 1, f"Expected initial pagination current to be 1, but got {current}"
+    assert total >= 2, f"Expected product to have at least 2 images to test 'next', but got {total}"
 
     page.go_to_next_image()
-    page.wait_for_text(page.CAROUSEL_PAGINATION, "2/4")
+    page.wait_for_text(page.CAROUSEL_PAGINATION, f"2/{total}")
 
-    actual_pagination = page.get_carousel_pagination_text()
-    assert actual_pagination == "2/4", f"Expected 2/4, but got {actual_pagination}"
+    actual_current, actual_total = page.get_carousel_pagination_counts()
+    assert (actual_current, actual_total) == (2, total), (
+        f"Expected 2/{total}, but got {actual_current}/{actual_total}"
+    )
 
 
 def test_carousel_first_prev_cycles_to_last(driver):
@@ -112,11 +115,14 @@ def test_carousel_first_prev_cycles_to_last(driver):
     page = ProductDetailPage(driver)
     page.open(PRODUCT_ID_ON_SALE)
 
-    page.go_to_prev_image()
-    page.wait_for_text(page.CAROUSEL_PAGINATION, "4/4")
+    _, total = page.get_carousel_pagination_counts()
+    assert total >= 2, f"Expected product to have at least 2 images to test 'prev cycles to last', but got {total}"
 
-    actual_pagination = page.get_carousel_pagination_text()
-    assert actual_pagination == "4/4", f"Expected 4/4, but got {actual_pagination}"
+    page.go_to_prev_image()
+    page.wait_for_text(page.CAROUSEL_PAGINATION, f"{total}/{total}")
+
+    actual_current, actual_total = page.get_carousel_pagination_counts()
+    assert actual_current == total, f"Expected {total}/{total}, but got {actual_current}/{actual_total}"
 
 
 def test_ip_title_link_navigates_to_ip_page(driver):

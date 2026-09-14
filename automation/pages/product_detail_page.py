@@ -1,3 +1,5 @@
+import re
+
 from selenium.webdriver.common.action_chains import ActionChains
 
 from config.settings import BASE_URL
@@ -29,6 +31,10 @@ class ProductDetailPage(ProductDetailLocators, BasePage):
 
     def get_carousel_pagination_text(self):
         return self.get_text(self.CAROUSEL_PAGINATION)
+
+    def get_carousel_pagination_counts(self):
+        current, total = re.match(r"(\d+)/(\d+)", self.get_carousel_pagination_text()).groups()
+        return int(current), int(total)
 
     def _swipe_carousel(self, direction):
         # ChromeDriver W3C Actions의 포인터 상태가 세션 내 반복 드래그에서
