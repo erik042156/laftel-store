@@ -977,8 +977,8 @@ def login_page(driver):
   백그라운드 서비스로 등록되어 있어 로그아웃/재부팅 후에도 자동 재시작됩니다).
 - 이 머신이 꺼져 있거나 서비스가 중지된 동안 Push된 커밋은, 러너가 다시 온라인이
   될 때까지 GitHub Actions 큐에서 대기합니다(즉시 실행되지 않음).
-- `test.yml`에 `schedule: cron: "0 23 * * *"`(매일 한국시간 오전 8시, GitHub Actions의
-  schedule은 항상 UTC 기준이라 UTC 전날 23시로 지정)를 추가해 push가 없는 날에도
+- `test.yml`에 `schedule: cron: "0 12 * * *"`(매일 한국시간 오후 9시, GitHub Actions의
+  schedule은 항상 UTC 기준이라 UTC 당일 12시로 지정)를 추가해 push가 없는 날에도
   매일 자동으로 전체 테스트가 실행되도록 했다. 이 시각에도 러너가 오프라인이면
   위와 동일하게 온라인이 될 때까지 대기한다.
 
@@ -1271,3 +1271,7 @@ Production 사이트 쪽 결함으로 인해 테스트가 실패(또는 실패�
  mixin 컨벤션을 신설. 16개 Page 클래스 전체와 `automation/pages/locators/` 대신\
  `automation/locators/`(pages/와 동일 레벨) 구조로 실제 코드에 적용하고 전체 pytest\
  스위트(113건)로 회귀 없음을 확인 (사용자 승인) | 승인완료 |
+| 2026-09-14 | test.yml의 schedule cron을 한국시간 오전 6시(cron "0 21 * * *")에서\
+ 오후 9시(cron "0 12 * * *")로 변경(사용자 요청). 16.3절의 cron 기록이 2026-09-07\
+ 8시→6시 변경 때 갱신되지 않아 "오전 8시"로 남아있던 오기를 함께 발견해 현재 값\
+ (오후 9시, cron "0 12 * * *")으로 정정 (사용자 승인) | 승인완료 |
