@@ -6,7 +6,7 @@ import re
 import pytest
 from dotenv import load_dotenv
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -61,6 +61,21 @@ def pytest_runtest_makereport(item, call):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = f"{item.name}_failed_{timestamp}.png"
     driver.save_screenshot(os.path.join(SCREENSHOTS_DIR, filename))
+
+
+def _click_when_stable(driver, locator, timeout):
+    # 요소가 element_to_be_clickable 조건을 만족해도 다른 요소에 가려져 있으면
+    # 클릭이 가로채인다(구글 로그인 비밀번호 단계에서 실측 확인,
+    # ElementClickInterceptedException). 요소가 찾아질 때까지 대기한 뒤 클릭하고,
+    # 가려져서 클릭이 가로채이면 해당 요소가 보이도록 하단으로 스크롤한 뒤 다시
+    # 찾아 클릭한다.
+    element = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+    try:
+        element.click()
+    except ElementClickInterceptedException:
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        element = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+        element.click()
 
 
 def _hide_webdriver_flag(driver):
@@ -193,7 +208,7 @@ def _complete_google_login(driver):
     )
     password_input.send_keys(password)
 
-    WebDriverWait(driver, LOGIN_TIMEOUT).until(EC.element_to_be_clickable((By.ID, "passwordNext"))).click()
+    _click_when_stable(driver, (By.ID, "passwordNext"), LOGIN_TIMEOUT)
 
     # 로그인이 성공하면 팝업 창이 자동으로 닫히고 원래 창이 laftel.net으로 리디렉션된다.
     WebDriverWait(driver, LOGIN_TIMEOUT).until(lambda d: len(d.window_handles) == 1)
