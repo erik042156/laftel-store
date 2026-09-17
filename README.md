@@ -10,6 +10,15 @@ Workflow를 구축한 개인 포트폴리오 프로젝트입니다.
 
 전체 운영 원칙은 [`CLAUDE.md`](./CLAUDE.md)를 따릅니다.
 
+## Project Summary
+
+- **Scope**: 라프텔 스토어(애니메이션 굿즈 커머스) 5개 기능(검색/상품상세/찜/카트/주문) 대상 QA Automation
+- **Test Coverage**: 전체 152 TC 중 113 TC 자동화 (자세히: 6절)
+- **Automation**: Python/Selenium/pytest/POM 기반 E2E 구조 (자세히: 5, 7절)
+- **CI**: GitHub Actions self-hosted runner, main Push + 매일 KST 21시 스케줄 (자세히: 8절)
+- **Reporting**: pytest-html/JUnit XML + Slack 알림 (자세히: 8절)
+- **추적성**: PRD → TC → 자동화 코드 → 실행 결과까지 TC-ID 기반 추적 (자세히: 13절)
+
 ---
 
 1. Project Goal
@@ -196,9 +205,9 @@ Slack Notification
 
 **목적**
 > - 반복적으로 수행하는 Regression 테스트를 자동화하고 정해진 시점에 CI에서 실행해 수동 수행 비용을 줄인다
-> - 업무 시작(통상 09시) 전에 테스트를 완료하고 출근 직후 결과를 확인할 수 있게 한다.
+> - 업무 종료 후 야간에 Regression을 실행해, 다음날 업무 시작 전 결과를 확인할 수 있게 한다.
 
-- **GitHub Actions**: `main` 브랜치 Push 시 자동 실행 + 매일 한국시간(KST) 오전 6시 스케줄
+- **GitHub Actions**: `main` 브랜치 Push 시 자동 실행 + 매일 한국시간(KST) 오후 9시 스케줄
   실행(`.github/workflows/test.yml`)
 - **Self-hosted Runner**: `store.laftel.net`이 한국 외 지역 IP를 차단해 GitHub 호스팅
   러너로는 접속 자체가 불가능하므로, self-hosted 러너(macOS)를 사용
