@@ -10,6 +10,7 @@ from config.settings import (
     SEARCH_KEYWORD_WITH_RESULTS,
     SEARCH_KEYWORD_WITH_STATUS_PRODUCTS,
 )
+from conftest import _skip_for_data_drift
 from pages.home_page import HomePage
 from pages.ip_page import IpPage
 from pages.product_detail_page import ProductDetailPage
@@ -192,6 +193,17 @@ def test_search_result_sale_ended_product_click_shows_disabled_button_and_active
     home_page.open_search_result(SEARCH_KEYWORD_SALE_ENDED_PRODUCT)
 
     search_result_page = SearchResultPage(driver)
+    # 검색 순위는 실시간으로 변하므로, 대상 상품이 1페이지에 실제 노출되는지 먼저 확인한다.
+    if not search_result_page.is_product_present(PRODUCT_ID_SEARCH_SALE_ENDED):
+        _skip_for_data_drift(
+            f"'{SEARCH_KEYWORD_SALE_ENDED_PRODUCT}' 검색 1페이지에 상품 {PRODUCT_ID_SEARCH_SALE_ENDED}이 없습니다."
+        )
+    # 상태 전제는 이후 검증 대상(상세페이지 버튼)과 독립된 신호인 검색 카드 뱃지로 확인한다.
+    card_badge = search_result_page.get_product_card_status_badge_text(PRODUCT_ID_SEARCH_SALE_ENDED)
+    if card_badge != "판매종료":
+        _skip_for_data_drift(
+            f"검색 카드의 상품 {PRODUCT_ID_SEARCH_SALE_ENDED} 상태가 '판매종료'가 아닙니다(현재: {card_badge})."
+        )
     search_result_page.click_product_card(PRODUCT_ID_SEARCH_SALE_ENDED)
 
     product_detail_page = ProductDetailPage(driver)
@@ -208,6 +220,13 @@ def test_search_result_sold_out_product_click_shows_disabled_button_and_active_w
     home_page.open_search_result(SEARCH_KEYWORD_SOLD_OUT_PRODUCT)
 
     search_result_page = SearchResultPage(driver)
+    # 검색 순위는 실시간으로 변하므로, 대상 상품이 1페이지에 실제 노출되는지 먼저 확인한다.
+    if not search_result_page.is_product_present(PRODUCT_ID_SOLD_OUT):
+        _skip_for_data_drift(f"'{SEARCH_KEYWORD_SOLD_OUT_PRODUCT}' 검색 1페이지에 상품 {PRODUCT_ID_SOLD_OUT}이 없습니다.")
+    # 상태 전제는 이후 검증 대상(상세페이지 버튼)과 독립된 신호인 검색 카드 뱃지로 확인한다.
+    card_badge = search_result_page.get_product_card_status_badge_text(PRODUCT_ID_SOLD_OUT)
+    if card_badge != "품절":
+        _skip_for_data_drift(f"검색 카드의 상품 {PRODUCT_ID_SOLD_OUT} 상태가 '품절'이 아닙니다(현재: {card_badge}).")
     search_result_page.click_product_card(PRODUCT_ID_SOLD_OUT)
 
     product_detail_page = ProductDetailPage(driver)

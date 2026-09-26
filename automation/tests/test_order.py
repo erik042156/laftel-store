@@ -1,5 +1,5 @@
 from config.settings import BASE_URL, PRODUCT_ID_ON_SALE
-from conftest import _parse_won
+from conftest import _parse_won, _skip_if_product_status_changed
 from pages.cart_page import CartPage
 from pages.checkout_page import CheckoutPage
 from pages.product_detail_page import ProductDetailPage
@@ -9,6 +9,7 @@ def test_buy_now_button_navigates_to_checkout(logged_in_driver):
     """TC-ORDER-001"""
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_ON_SALE, "구매하기")
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
     product_detail_page.click_buy_now_button()
@@ -27,6 +28,7 @@ def test_cart_buy_button_navigates_to_checkout(logged_in_driver):
 
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_ON_SALE, "구매하기")
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
     product_detail_page.click_add_to_cart_button()
@@ -51,6 +53,7 @@ def test_cart_buy_button_navigates_to_checkout(logged_in_driver):
 def _go_to_checkout(driver):
     product_detail_page = ProductDetailPage(driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_ON_SALE, "구매하기")
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
     product_detail_page.click_buy_now_button()
@@ -170,6 +173,7 @@ def test_bottom_buy_button_shows_amount_and_product_type_count(logged_in_driver)
     """TC-ORDER-018"""
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_ON_SALE, "구매하기")
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
     product_detail_page.increase_quantity()

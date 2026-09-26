@@ -1,5 +1,5 @@
 from config.settings import BASE_URL, PRODUCT_ID_HIGH_PRICE, PRODUCT_ID_ON_SALE, PRODUCT_ID_WITH_OPTIONS
-from conftest import _parse_won
+from conftest import _parse_won, _skip_for_data_drift, _skip_if_product_status_changed
 from pages.cart_page import CartPage
 from pages.product_detail_page import ProductDetailPage
 
@@ -7,14 +7,18 @@ from pages.product_detail_page import ProductDetailPage
 def _add_product_to_cart(driver, product_id):
     page = ProductDetailPage(driver)
     page.open(product_id)
+    # 비활성 버튼은 click()의 element_to_be_clickable 대기에서 타임아웃되므로 클릭 전에
+    # 판매 상태를 확인한다.
+    _skip_if_product_status_changed(page, product_id, "구매하기")
     page.click_buy_button()
 
     if product_id == PRODUCT_ID_WITH_OPTIONS:
         # 구매하기 클릭 직후 옵션 드롭다운이 이미 펼쳐진 상태이며, 옵션을 선택해야만
         # 수량 UI가 나타난다(product_detail_page.click_option_dropdown 참고).
         page.click_option_dropdown()
-        option_items = page.get_option_items()
-        selectable_index = next(i for i in range(len(option_items)) if not page.is_option_sold_out(i))
+        selectable_index = page.find_option_index(sold_out=False)
+        if selectable_index is None:
+            _skip_for_data_drift(f"상품 {product_id}에 구매 가능한 옵션이 없습니다.")
         page.click_option_by_index(selectable_index)
 
     page.wait_for_text(page.QUANTITY_VALUE, "1")
@@ -61,6 +65,7 @@ def test_adding_to_cart_shows_toast_and_badge(logged_in_driver):
     """TC-CART-001"""
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_ON_SALE, "구매하기")
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
 
@@ -220,8 +225,19 @@ def test_two_or_more_items_over_threshold_shows_free_bundled_shipping(logged_in_
     cart_page = CartPage(logged_in_driver)
     cart_page.clear_cart()
 
-    # 합산 100,000원 이상을 만들기 위해 고가 상품(PRODUCT_ID_HIGH_PRICE, 344,000원)과
-    # 저가 상품을 각 1개씩 담는다(재고 상한을 피하기 위해 수량 증가는 사용하지 않음).
+    # 합산 100,000원 이상을 만들기 위해 고가 상품(PRODUCT_ID_HIGH_PRICE, 최소 100,000원 이상이어야
+    # 함)과 저가 상품을 각 1개씩 담는다(재고 상한을 피하기 위해 수량 증가는 사용하지 않음). 가격은
+    # 판매자가 바꿀 수 있는 실측 데이터이므로, 카트 계산 결과가 아니라 상세페이지 가격을 독립적으로
+    # 조회해 임계값을 여전히 넘는지 먼저 확인한다(카트 합계로 확인하면 카트 계산 로직 자체의
+    # 버그를 가격 변동으로 오인해 가려버릴 수 있다).
+    high_price_page = ProductDetailPage(logged_in_driver)
+    high_price_page.open(PRODUCT_ID_HIGH_PRICE)
+    high_price = _parse_won(high_price_page.get_product_price())
+    if high_price < 100_000:
+        _skip_for_data_drift(
+            f"상품 {PRODUCT_ID_HIGH_PRICE} 가격({high_price:,}원)이 무료배송 기준 100,000원 미만입니다."
+        )
+
     _add_product_to_cart(logged_in_driver, PRODUCT_ID_HIGH_PRICE)
     _add_product_to_cart(logged_in_driver, PRODUCT_ID_ON_SALE)
 

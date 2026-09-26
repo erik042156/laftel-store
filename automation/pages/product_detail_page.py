@@ -137,6 +137,16 @@ class ProductDetailPage(ProductDetailLocators, BasePage):
     def is_option_sold_out(self, index):
         return self.get_option_items()[index].get_attribute("aria-disabled") == "true"
 
+    def find_option_index(self, sold_out):
+        # 드롭다운 목록은 비동기로 채워지므로, 즉시 판정하면 "아직 로딩 중"을 "해당 옵션
+        # 없음"으로 오판할 수 있어 최소 1개가 렌더링될 때까지 먼저 대기한다. 조건을 만족하는
+        # 옵션이 실제로 없을 수 있으므로(재고 상태 변화) None을 반환해 호출부가 판단하게 한다.
+        self._wait(self.OPTION_ITEMS)
+        for index in range(len(self.get_option_items())):
+            if self.is_option_sold_out(index) == sold_out:
+                return index
+        return None
+
     def click_option_by_index(self, index):
         item = self.get_option_items()[index]
         self.driver.execute_script('arguments[0].scrollIntoView({block: "center", inline: "center"});', item)

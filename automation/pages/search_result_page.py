@@ -32,6 +32,16 @@ class SearchResultPage(SearchResultLocators, BasePage):
     def click_product_card(self, product_id):
         self.click(self.product_card_locator(product_id))
 
+    def is_product_present(self, product_id):
+        # 그리드는 비동기로 채워지므로 카드가 하나라도 렌더링된 뒤 판정한다(즉시 판정 시
+        # 로딩 지연을 "미노출"로 오판해 잘못 skip될 수 있다).
+        self._wait(self.PRODUCT_GRID_ITEM)
+        return len(self.driver.find_elements(*self.product_card_locator(product_id))) > 0
+
+    def get_product_card_status_badge_text(self, product_id):
+        card = self._wait(self.product_card_locator(product_id))
+        return self.get_status_badge_text(card)
+
     def is_empty_state_displayed(self):
         self._wait(self.EMPTY_STATE_MESSAGE)
         return len(self.driver.find_elements(*self.EMPTY_STATE_MESSAGE)) > 0

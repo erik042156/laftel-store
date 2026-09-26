@@ -6,6 +6,7 @@ from config.settings import (
     PRODUCT_ID_SOLD_OUT,
     PRODUCT_ID_WITH_OPTIONS,
 )
+from conftest import _skip_for_data_drift, _skip_if_product_status_changed
 from pages.cart_page import CartPage
 from pages.my_store_page import MyStorePage
 from pages.not_found_page import NotFoundPage
@@ -262,6 +263,7 @@ def test_buy_button_expands_purchase_area(logged_in_driver):
     """TC-PRODUCT-DETAIL-035"""
     page = ProductDetailPage(logged_in_driver)
     page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(page, PRODUCT_ID_ON_SALE, "구매하기")
 
     page.click_buy_button()
     page.wait_for_text(page.QUANTITY_VALUE, "1")
@@ -279,12 +281,18 @@ def test_option_dropdown_shows_sold_out_options_disabled(logged_in_driver):
     """TC-PRODUCT-DETAIL-036"""
     page = ProductDetailPage(logged_in_driver)
     page.open(PRODUCT_ID_WITH_OPTIONS)
+    _skip_if_product_status_changed(page, PRODUCT_ID_WITH_OPTIONS, "구매하기")
 
     page.click_buy_button()
     page.click_option_dropdown()
 
     option_items = page.get_option_items()
     assert len(option_items) > 0, "Expected at least one option item"
+
+    # 품절/구매 가능 옵션이 섞여 있어야 검증 가능한 TC이므로, 실제 옵션 재고가 바뀌어
+    # 한쪽만 남으면(전제 불충족) 실패 대신 skip한다.
+    if page.find_option_index(sold_out=True) is None or page.find_option_index(sold_out=False) is None:
+        _skip_for_data_drift(f"상품 {PRODUCT_ID_WITH_OPTIONS}에 품절/구매 가능 옵션이 함께 존재하지 않습니다.")
 
     sold_out_flags = [page.is_option_sold_out(i) for i in range(len(option_items))]
     assert any(sold_out_flags), "Expected at least one sold-out option"
@@ -295,12 +303,14 @@ def test_selecting_option_updates_total_price(logged_in_driver):
     """TC-PRODUCT-DETAIL-037"""
     page = ProductDetailPage(logged_in_driver)
     page.open(PRODUCT_ID_WITH_OPTIONS)
+    _skip_if_product_status_changed(page, PRODUCT_ID_WITH_OPTIONS, "구매하기")
 
     page.click_buy_button()
     page.click_option_dropdown()
 
-    option_items = page.get_option_items()
-    selectable_index = next(i for i in range(len(option_items)) if not page.is_option_sold_out(i))
+    selectable_index = page.find_option_index(sold_out=False)
+    if selectable_index is None:
+        _skip_for_data_drift(f"상품 {PRODUCT_ID_WITH_OPTIONS}에 구매 가능한(품절 아닌) 옵션이 없습니다.")
     page.click_option_by_index(selectable_index)
 
     page.wait_for_text(page.QUANTITY_VALUE, "1")
@@ -315,6 +325,7 @@ def test_no_option_product_shows_quantity_directly(logged_in_driver):
     """TC-PRODUCT-DETAIL-038"""
     page = ProductDetailPage(logged_in_driver)
     page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(page, PRODUCT_ID_ON_SALE, "구매하기")
 
     page.click_buy_button()
     page.wait_for_text(page.QUANTITY_VALUE, "1")
@@ -329,6 +340,7 @@ def test_quantity_minimum_boundary(logged_in_driver):
     """TC-PRODUCT-DETAIL-039"""
     page = ProductDetailPage(logged_in_driver)
     page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(page, PRODUCT_ID_ON_SALE, "구매하기")
 
     page.click_buy_button()
     page.wait_for_text(page.QUANTITY_VALUE, "1")
@@ -343,12 +355,14 @@ def test_clicking_sold_out_option_is_blocked(logged_in_driver):
     """TC-PRODUCT-DETAIL-046 (Negative)"""
     page = ProductDetailPage(logged_in_driver)
     page.open(PRODUCT_ID_WITH_OPTIONS)
+    _skip_if_product_status_changed(page, PRODUCT_ID_WITH_OPTIONS, "구매하기")
 
     page.click_buy_button()
     page.click_option_dropdown()
 
-    option_items = page.get_option_items()
-    sold_out_index = next(i for i in range(len(option_items)) if page.is_option_sold_out(i))
+    sold_out_index = page.find_option_index(sold_out=True)
+    if sold_out_index is None:
+        _skip_for_data_drift(f"상품 {PRODUCT_ID_WITH_OPTIONS}에 품절 옵션이 없습니다.")
     page.click_option_by_index(sold_out_index)
 
     quantity_elements = logged_in_driver.find_elements(*page.QUANTITY_DECREASE)
@@ -359,6 +373,7 @@ def test_on_sale_button_shows_enabled_buy_text(driver):
     """TC-PRODUCT-DETAIL-040"""
     page = ProductDetailPage(driver)
     page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(page, PRODUCT_ID_ON_SALE, "구매하기")
 
     actual_text = page.get_buy_button_text()
     assert actual_text == "구매하기", f"Expected '구매하기', but got {actual_text}"
@@ -369,6 +384,7 @@ def test_sold_out_button_shows_disabled_and_wish_icon_active(driver):
     """TC-PRODUCT-DETAIL-042"""
     page = ProductDetailPage(driver)
     page.open(PRODUCT_ID_SOLD_OUT)
+    _skip_if_product_status_changed(page, PRODUCT_ID_SOLD_OUT, "품절")
 
     actual_text = page.get_buy_button_text()
     assert actual_text == "품절", f"Expected '품절', but got {actual_text}"
@@ -380,6 +396,7 @@ def test_ended_button_shows_disabled_and_wish_icon_active(driver):
     """TC-PRODUCT-DETAIL-043"""
     page = ProductDetailPage(driver)
     page.open(PRODUCT_ID_SALE_ENDED)
+    _skip_if_product_status_changed(page, PRODUCT_ID_SALE_ENDED, "판매종료")
 
     actual_text = page.get_buy_button_text()
     assert actual_text == "판매종료", f"Expected '판매종료', but got {actual_text}"
@@ -391,6 +408,7 @@ def test_clicking_disabled_button_has_no_effect(driver):
     """TC-PRODUCT-DETAIL-044 (Negative)"""
     page = ProductDetailPage(driver)
     page.open(PRODUCT_ID_SOLD_OUT)
+    _skip_if_product_status_changed(page, PRODUCT_ID_SOLD_OUT, "품절")
 
     page.try_click_disabled_buy_button()
 
@@ -546,6 +564,7 @@ def test_cart_page_item_click_enters_product_detail(logged_in_driver):
 
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_ON_SALE)
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_ON_SALE, "구매하기")
     product_detail_page.click_buy_button()
     product_detail_page.wait_for_text(product_detail_page.QUANTITY_VALUE, "1")
     product_detail_page.click_add_to_cart_button()

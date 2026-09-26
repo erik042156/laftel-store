@@ -8,7 +8,7 @@ from config.settings import (
     PRODUCT_ID_SOLD_OUT,
     SEARCH_KEYWORD_WITH_RESULTS,
 )
-from conftest import _complete_google_login
+from conftest import _complete_google_login, _skip_if_product_status_changed
 from pages.home_page import HomePage
 from pages.ip_page import IpPage
 from pages.my_store_page import MyStorePage
@@ -161,6 +161,9 @@ def test_recent_section_shows_wish_state_and_status_badges(logged_in_driver):
         product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "false")
 
     product_detail_page.open(PRODUCT_ID_SOLD_OUT)
+    # 이 TC가 검증하는 대상은 "최근 본 상품" 섹션의 품절 뱃지이므로, 그 뱃지 자체가 아니라
+    # 독립적인 상세페이지 버튼 상태로 전제(품절)를 확인한다(순환 논리 방지).
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_SOLD_OUT, "품절")
 
     product_detail_page.open(PRODUCT_ID_HIGH_PRICE)
     if not product_detail_page.is_wish_icon_filled():
@@ -354,6 +357,9 @@ def test_sold_out_wished_item_shows_status_badge_and_opens_detail(logged_in_driv
     """TC-WISHLIST-017"""
     product_detail_page = ProductDetailPage(logged_in_driver)
     product_detail_page.open(PRODUCT_ID_SOLD_OUT)
+    # 이 TC가 검증하는 대상은 찜 목록의 품절 뱃지이므로, 그 뱃지 자체가 아니라 독립적인
+    # 상세페이지 버튼 상태로 전제(품절)를 확인한다(순환 논리 방지).
+    _skip_if_product_status_changed(product_detail_page, PRODUCT_ID_SOLD_OUT, "품절")
     if not product_detail_page.is_wish_icon_filled():
         product_detail_page.click_wish_icon()
         product_detail_page.wait_for_attribute_value(product_detail_page.BOTTOM_WISH_ICON, "aria-pressed", "true")

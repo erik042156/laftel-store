@@ -67,9 +67,30 @@ def _extract_tc_id(testcase):
     return "-"
 
 
+# 상품 상태/가격/검색 순위 등 실제 판매 데이터가 바뀌어 테스트가 skip된 경우,
+# conftest.py의 _skip_for_data_drift/_skip_if_product_status_changed가 이 접두어로 표시한다.
+# 실패 목록에는 안 잡히지만 방치하면 커버리지가 조용히 줄어들므로 별도로 노출한다.
+DATA_DRIFT_SKIP_PREFIX = "[TEST DATA DRIFT]"
+
+drift_skips = []
+for testcase in suite.findall("testcase"):
+    node = testcase.find("skipped")
+    if node is None:
+        continue
+    message = (node.get("message") or "").strip()
+    if not message.startswith(DATA_DRIFT_SKIP_PREFIX):
+        continue
+    tc_id = _extract_tc_id(testcase)
+    name = testcase.get("name", "")
+    drift_skips.append(f"• `{tc_id}` {name} — {message}")
+
+drift_block = ""
+if drift_skips:
+    drift_block = f"\n\n:warning: 데이터 변경 추정 SKIP {len(drift_skips)}건\n" + "\n".join(drift_skips)
+
 if failed_count == 0:
     color = "#2eb67d"
-    text = f":white_check_mark: 자동화 테스트 성공 — {passed}/{total} PASSED"
+    text = f":white_check_mark: 자동화 테스트 성공 — {passed}/{total} PASSED" + drift_block
 else:
     lines = [f":x: 자동화 테스트 실패 — {failed_count}/{total} FAILED (통과 {passed}건)", ""]
     for testcase in suite.findall("testcase"):
@@ -87,7 +108,7 @@ else:
         tc_id = _extract_tc_id(testcase)
         lines.append(f"• `{tc_id}` `{file_ref}` — {name}\n  {reason}")
     color = "#e01e5a"
-    text = "\n".join(lines)
+    text = "\n".join(lines) + drift_block
 
 print(json.dumps({"attachments": [{"color": color, "text": text}]}))
 PYEOF

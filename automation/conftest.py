@@ -145,6 +145,32 @@ def _parse_won(text):
     return int(text.replace(",", "").replace("원", ""))
 
 
+# 실제 판매 데이터(재고/판매상태/가격/검색 순위)는 QA가 통제할 수 없어, 전제 조건이
+# 더 이상 성립하지 않으면 실패 대신 이 태그로 skip한다. CI Slack 알림에서 "데이터 드리프트"로
+# 별도 표시하기 위해 접두어를 고정한다(config/settings.py 테스트 상품 주석 참고).
+DATA_DRIFT_SKIP_PREFIX = "[TEST DATA DRIFT]"
+
+
+def _skip_for_data_drift(reason):
+    pytest.skip(f"{DATA_DRIFT_SKIP_PREFIX} {reason} — config/settings.py의 테스트 상품 ID/키워드 갱신이 필요할 수 있습니다.")
+
+
+def _skip_if_product_status_changed(page, product_id, expected_label):
+    # 라벨이 기대값과 다르더라도, 라벨과 활성 상태가 서로 모순되면(예: "품절"인데 버튼이
+    # 활성) 데이터 드리프트가 아니라 실제 결함일 수 있으므로 skip하지 않고 이후 assert에서
+    # 그대로 실패하게 둔다. "다른 정상 상태로 일관되게" 바뀐 경우만 드리프트로 인정한다.
+    actual_label = page.get_buy_button_text()
+    if actual_label == expected_label:
+        return
+    is_enabled = page.is_buy_button_enabled()
+    consistent_on_sale = actual_label == "구매하기" and is_enabled
+    consistent_unavailable = actual_label in ("품절", "판매종료") and not is_enabled
+    if consistent_on_sale or consistent_unavailable:
+        _skip_for_data_drift(
+            f"상품 {product_id}의 실제 상태가 '{expected_label}'가 아닌 '{actual_label}'(활성={is_enabled})입니다."
+        )
+
+
 def _login_with_email(driver):
     email = os.environ["TEST_ACCOUNT_EMAIL"]
     password = os.environ["TEST_ACCOUNT_PASSWORD"]
